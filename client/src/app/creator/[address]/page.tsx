@@ -1,20 +1,30 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { getCreatorByAddress, getPostsByCreator } from "@/data/mock";
 import { BackLink, NotFound } from "@/components/common";
 import { CreatorHeader } from "@/components/creator";
 import { PostList } from "@/components/post";
+import { PotatoLoader } from "@/components/ui";
+import { useCreatorByAddress, useCreatorPosts, useIsSubscribed } from "@/hooks";
 
 export default function CreatorProfilePage() {
   const params = useParams();
   const address = params.address as string;
 
-  const creator = getCreatorByAddress(address);
-  const posts = getPostsByCreator(address);
+  const { data: creator, isLoading: isLoadingCreator } = useCreatorByAddress(address);
+  const { data: posts, isLoading: isLoadingPosts } = useCreatorPosts(
+    creator?.profileId || "",
+    address
+  );
+  const { isSubscribed } = useIsSubscribed(creator?.profileId || "");
 
-  // Mock subscription status - will be replaced with real check
-  const isSubscribed = false;
+  if (isLoadingCreator) {
+    return (
+      <div className="page-container py-8 flex justify-center">
+        <PotatoLoader />
+      </div>
+    );
+  }
 
   if (!creator) {
     return <NotFound title="Creator not found" />;
@@ -26,7 +36,7 @@ export default function CreatorProfilePage() {
 
       <CreatorHeader
         creator={creator}
-        postsCount={posts.length}
+        postsCount={posts?.length || 0}
         isSubscribed={isSubscribed}
       />
 
@@ -37,7 +47,13 @@ export default function CreatorProfilePage() {
         Posts
       </h2>
 
-      <PostList posts={posts} emptyMessage="No posts yet" />
+      {isLoadingPosts ? (
+        <div className="flex justify-center py-8">
+          <PotatoLoader />
+        </div>
+      ) : (
+        <PostList posts={posts || []} emptyMessage="No posts yet" />
+      )}
     </div>
   );
 }
