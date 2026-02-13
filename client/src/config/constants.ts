@@ -1,5 +1,5 @@
 export const PACKAGE_ID =
-  "0x815fd83d04fb33778cde254aae345302967c0eb600037e2164bf374f3fbd01db";
+  "0x6945b24f7de0ab5033354e138f62395cd6a6c774688c456781c6e0b77ab1a94f";
 
 export const GRAPHQL_ENDPOINT = "https://graphql.testnet.sui.io/graphql";
 
