@@ -8,8 +8,11 @@ import { registerEnokiWallets } from "@mysten/enoki";
 
 import "@mysten/dapp-kit/dist/index.css";
 
+const SUI_NETWORK = (process.env.NEXT_PUBLIC_SUI_NETWORK || "testnet") as "testnet" | "mainnet" | "devnet";
+const SUI_RPC_URL = process.env.NEXT_PUBLIC_SUI_RPC_URL || "https://fullnode.testnet.sui.io:443";
+
 const networks = {
-  testnet: { url: "https://fullnode.testnet.sui.io:443", network: "testnet" as const },
+  [SUI_NETWORK]: { url: SUI_RPC_URL, network: SUI_NETWORK },
 };
 
 function RegisterEnokiWalletsComponent() {
@@ -27,7 +30,7 @@ function RegisterEnokiWalletsComponent() {
     const { unregister } = registerEnokiWallets({
       apiKey: enokiApiKey,
       client,
-      network: "testnet",
+      network: SUI_NETWORK,
       providers: {
         google: {
           clientId: googleClientId,
@@ -52,7 +55,7 @@ export function SuiProvider({ children }: SuiProviderProps) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <SuiClientProvider networks={networks} defaultNetwork="testnet">
+      <SuiClientProvider networks={networks} defaultNetwork={SUI_NETWORK}>
         <WalletProvider autoConnect preferredWallets={["Sign in with Google"]}>
           <RegisterEnokiWalletsComponent />
           {children}

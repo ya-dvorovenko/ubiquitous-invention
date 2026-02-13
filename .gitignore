@@ -1,2 +1,24 @@
-.DS_Store
+# Move build artifacts
 build/
+*/build/*
+
+move/Published.toml
+
+# Sui
+.sui/
+
+# Dependencies
+node_modules/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Logs
+*.log
+
+# Test coverage
+*.lcov

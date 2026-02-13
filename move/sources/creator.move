@@ -109,6 +109,11 @@ public(package) fun price(p: &CreatorProfile): u64 { p.price }
 public(package) fun owner(p: &CreatorProfile): address { p.owner }
 public(package) fun inc_subs(p: &mut CreatorProfile) { p.total_subs = p.total_subs + 1; }
 public(package) fun profile_uid(p: &mut CreatorProfile): &mut UID { &mut p.id }
+public(package) fun profile_uid_ref(p: &CreatorProfile): &UID { &p.id }
+
+public fun has_post(p: &CreatorProfile, post_id: u64): bool {
+    df::exists_(&p.id, PostKey { post_id })
+}
 
 #[test_only]
 public fun init_for_testing(ctx: &mut TxContext) {
@@ -162,6 +167,67 @@ fun test_register_and_publish_post() {
 
     assert!(profile.total_posts == 1);
     assert!(df::exists_(&profile.id, PostKey { post_id: 0 }));
+
+    ts::return_shared(profile);
+    clock.destroy_for_testing();
+    ts.end();
+}
+
+#[test]
+fun test_has_post() {
+    let mut ts = ts::begin(ADMIN);
+
+    init_for_testing(ts.ctx());
+
+    ts.next_tx(CREATOR_ADDR);
+
+    let publisher = ts.take_from_address<Publisher>(ADMIN);
+    let clock = clock::create_for_testing(ts.ctx());
+
+    register(
+        &publisher,
+        b"TestCreator".to_string(),
+        b"Bio".to_string(),
+        1000,
+        &clock,
+        ts.ctx(),
+    );
+
+    transfer::public_transfer(publisher, ADMIN);
+
+    ts.next_tx(CREATOR_ADDR);
+
+    let mut profile = ts.take_shared<CreatorProfile>();
+
+    assert!(!has_post(&profile, 0));
+    assert!(!has_post(&profile, 1));
+
+    publish_post(
+        &mut profile,
+        b"Post 1".to_string(),
+        b"Preview".to_string(),
+        b"blob123".to_string(),
+        true,
+        &clock,
+        ts.ctx(),
+    );
+
+    assert!(has_post(&profile, 0));
+    assert!(!has_post(&profile, 1));
+
+    publish_post(
+        &mut profile,
+        b"Post 2".to_string(),
+        b"Preview 2".to_string(),
+        b"blob456".to_string(),
+        false,
+        &clock,
+        ts.ctx(),
+    );
+
+    assert!(has_post(&profile, 0));
+    assert!(has_post(&profile, 1));
+    assert!(!has_post(&profile, 2));
 
     ts::return_shared(profile);
     clock.destroy_for_testing();

@@ -1,1 +1,1 @@
-export { useSuiNS } from "./useSuiNS";
+export { useSuiNS, useSuiNSName } from "./useSuiNS";

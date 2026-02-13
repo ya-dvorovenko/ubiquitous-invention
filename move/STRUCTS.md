@@ -1,26 +1,5 @@
 # SuiPatron Structs
 
-## registry.move
-
-### Registry
-```
-has key (shared)
-- id: UID
-- by_addr: Table<address, ID>
-- by_name: Table<String, ID>
-- total: u64
-```
-
-### CreatorRegistered (event)
-```
-has copy, drop
-- profile_id: ID
-- owner: address
-- name: String
-```
-
----
-
 ## creator.move
 
 ### CREATOR
@@ -67,6 +46,14 @@ has copy, drop
 - blob_id: String
 ```
 
+### CreatorRegistered (event)
+```
+has copy, drop
+- profile_id: ID
+- owner: address
+- name: String
+```
+
 ---
 
 ## subscription.move
@@ -76,15 +63,8 @@ has copy, drop
 has key, store (owned)
 - id: UID
 - profile_id: ID
-- subscriber: address
 - expires_at: u64
 - created_at: u64
-```
-
-### SubKey
-```
-has copy, drop, store (DF key)
-- addr: address
 ```
 
 ### Subscribed (event)

@@ -64,6 +64,10 @@ entry fun subscribe(
 public(package) fun profile_id(s: &Subscription): ID { s.profile_id }
 public(package) fun expires_at(s: &Subscription): u64 { s.expires_at }
 
+public fun is_subscribed(p: &CreatorProfile, addr: address): bool {
+    df::exists_(creator::profile_uid_ref(p), addr)
+}
+
 #[test_only]
 use sui::{test_scenario as ts, clock, coin};
 
@@ -108,6 +112,53 @@ fun test_subscribe() {
     ts.next_tx(SUBSCRIBER);
 
     assert!(ts.has_most_recent_for_sender<Subscription>());
+
+    clock.destroy_for_testing();
+    ts.end();
+}
+
+#[test]
+fun test_is_subscribed() {
+    let mut ts = ts::begin(ADMIN);
+
+    suipatron::creator::init_for_testing(ts.ctx());
+
+    ts.next_tx(CREATOR_ADDR);
+
+    let publisher = ts.take_from_address<sui::package::Publisher>(ADMIN);
+    let clock = clock::create_for_testing(ts.ctx());
+
+    suipatron::creator::register(
+        &publisher,
+        b"Creator".to_string(),
+        b"Bio".to_string(),
+        1000,
+        &clock,
+        ts.ctx(),
+    );
+
+    transfer::public_transfer(publisher, ADMIN);
+
+    ts.next_tx(SUBSCRIBER);
+
+    let profile = ts.take_shared<CreatorProfile>();
+    assert!(!is_subscribed(&profile, SUBSCRIBER));
+    assert!(!is_subscribed(&profile, @0xDD));
+    ts::return_shared(profile);
+
+    ts.next_tx(SUBSCRIBER);
+
+    let mut profile = ts.take_shared<CreatorProfile>();
+    let payment = coin::mint_for_testing<SUI>(1000, ts.ctx());
+    subscribe(&mut profile, payment, &clock, ts.ctx());
+    ts::return_shared(profile);
+
+    ts.next_tx(SUBSCRIBER);
+
+    let profile = ts.take_shared<CreatorProfile>();
+    assert!(is_subscribed(&profile, SUBSCRIBER));
+    assert!(!is_subscribed(&profile, @0xDD));
+    ts::return_shared(profile);
 
     clock.destroy_for_testing();
     ts.end();

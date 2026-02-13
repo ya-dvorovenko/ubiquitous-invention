@@ -8,6 +8,7 @@ import {
 } from "@mysten/dapp-kit";
 import { useState } from "react";
 import Image from "next/image";
+import { useSuiNSName } from "@/hooks";
 
 function formatAddress(address: string): string {
   return `${address.slice(0, 13)}..${address.slice(-3)}`;
@@ -22,6 +23,7 @@ export function WalletConnect() {
   const currentAccount = useCurrentAccount();
   const { mutate: disconnect } = useDisconnectWallet();
   const [open, setOpen] = useState(false);
+  const { name: suinsName } = useSuiNSName(currentAccount?.address);
 
   const { data: balanceData } = useSuiClientQuery(
     "getBalance",
@@ -30,6 +32,7 @@ export function WalletConnect() {
   );
 
   const balance = balanceData ? formatBalance(balanceData.totalBalance) : "0.00";
+  const displayName = suinsName || (currentAccount ? formatAddress(currentAccount.address) : "");
 
   if (currentAccount) {
     return (
@@ -49,7 +52,7 @@ export function WalletConnect() {
 
         <div className="flex items-center gap-2" style={{ color: "#FFFFFF" }}>
           <span style={{ fontSize: 16, fontWeight: 400 }}>
-            {formatAddress(currentAccount.address)}
+            {displayName}
           </span>
           <button
             onClick={() => {
