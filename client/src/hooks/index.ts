@@ -1,0 +1,1 @@
+export { useSuiNS } from "./useSuiNS";
