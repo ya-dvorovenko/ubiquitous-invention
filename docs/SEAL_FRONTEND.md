@@ -24,8 +24,6 @@ Required packages:
 
 ---
 
-https://seal-docs.wal.app/Pricing/
-
 ## 1. SealClient Setup
 
 ```typescript
@@ -288,7 +286,7 @@ The `examples/frontend` folder contains a working Seal + Subscription example. K
 
 ## 6. Walrus Configuration
 
-Configure Walrus publisher and aggregator URLs (e.g. in `vite.config.ts` or env). See [Walrus docs](https://docs.wal.app/usage/web-api.html#public-services) for public services.
+Walrus publisher and aggregator URLs are in `client/src/config/walrus.ts`. For Vite dev, add proxies (see `examples/frontend/vite.config.ts`). See [Walrus docs](https://docs.wal.app/usage/web-api.html#public-services) for public services.
 
 For local dev, you may need proxies in Vite:
 

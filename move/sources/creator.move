@@ -20,6 +20,9 @@ public struct CreatorProfile has key {
     created_at: u64,
 }
 
+/// Post stored as dynamic field on CreatorProfile.
+/// blob_id: Walrus blob ID (encrypted with Seal when encrypted=true).
+/// Decryption policy: seal_mock::seal_approve (subscription required).
 public struct Post has store, drop {
     post_id: u64,
     title: String,
