@@ -21,16 +21,20 @@ interface SponsorTransactionResult {
 export async function sponsorTransaction(
   input: SponsorTransactionInput
 ): Promise<SponsorTransactionResult> {
-  const result = await enokiClient.createSponsoredTransaction({
-    network: SUI_NETWORK,
-    transactionKindBytes: input.transactionKindBytes,
-    sender: input.sender,
-  });
+  try {
+    const result = await enokiClient.createSponsoredTransaction({
+      network: SUI_NETWORK,
+      transactionKindBytes: input.transactionKindBytes,
+      sender: input.sender,
+    });
 
-  return {
-    bytes: result.bytes,
-    digest: result.digest,
-  };
+    return {
+      bytes: result.bytes,
+      digest: result.digest,
+    };
+  } catch (error: unknown) {
+    throw new Error(error instanceof Error ? error.message : String(error));
+  }
 }
 
 interface ExecuteSponsoredInput {
@@ -45,12 +49,16 @@ interface ExecuteSponsoredResult {
 export async function executeSponsoredTransaction(
   input: ExecuteSponsoredInput
 ): Promise<ExecuteSponsoredResult> {
-  const result = await enokiClient.executeSponsoredTransaction({
-    digest: input.digest,
-    signature: input.signature,
-  });
+  try {
+    const result = await enokiClient.executeSponsoredTransaction({
+      digest: input.digest,
+      signature: input.signature,
+    });
 
-  return {
-    digest: result.digest,
-  };
+    return {
+      digest: result.digest,
+    };
+  } catch (error: unknown) {
+    throw new Error(error instanceof Error ? error.message : String(error));
+  }
 }

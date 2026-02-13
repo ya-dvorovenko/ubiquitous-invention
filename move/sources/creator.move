@@ -4,10 +4,17 @@ use std::string::String;
 use sui::clock::Clock;
 use sui::dynamic_field as df;
 use sui::event;
+use sui::package;
+use sui::display;
 
-const ENotOwner: u64 = 0;
+const EWrongProfile: u64 = 0;
 
 public struct CREATOR has drop {}
+
+public struct CreatorCap has key, store {
+    id: UID,
+    profile_id: ID,
+}
 
 public struct CreatorProfile has key {
     id: UID,
@@ -47,6 +54,19 @@ public struct CreatorRegistered has copy, drop {
     name: String,
 }
 
+fun init(otw: CREATOR, ctx: &mut TxContext) {
+    let publisher = package::claim(otw, ctx);
+
+    let mut profile_display = display::new<CreatorProfile>(&publisher, ctx);
+    profile_display.add(b"name".to_string(), b"{name}".to_string());
+    profile_display.add(b"description".to_string(), b"{bio}".to_string());
+    profile_display.add(b"project_url".to_string(), b"https://suipatron.com".to_string());
+    display::update_version(&mut profile_display);
+    transfer::public_transfer(profile_display, ctx.sender());
+
+    transfer::public_transfer(publisher, ctx.sender());
+}
+
 entry fun register(
     name: String,
     bio: String,
@@ -64,24 +84,33 @@ entry fun register(
         total_subs: 0,
         created_at: clock.timestamp_ms(),
     };
+    let profile_id = object::id(&profile);
+
+    let cap = CreatorCap {
+        id: object::new(ctx),
+        profile_id,
+    };
+
     event::emit(CreatorRegistered {
-        profile_id: object::id(&profile),
+        profile_id,
         owner: ctx.sender(),
         name,
     });
+
+    transfer::transfer(cap, ctx.sender());
     transfer::share_object(profile);
 }
 
 entry fun publish_post(
+    cap: &CreatorCap,
     profile: &mut CreatorProfile,
     title: String,
     preview: String,
     blob_id: String,
     encrypted: bool,
     clock: &Clock,
-    ctx: &TxContext,
 ) {
-    assert!(profile.owner == ctx.sender(), ENotOwner);
+    assert!(cap.profile_id == object::id(profile), EWrongProfile);
     let post_id = profile.total_posts;
     df::add(&mut profile.id, PostKey { post_id }, Post {
         post_id,
@@ -132,22 +161,24 @@ fun test_register_and_publish_post() {
 
     ts.next_tx(CREATOR_ADDR);
 
+    let cap = ts.take_from_sender<CreatorCap>();
     let mut profile = ts.take_shared<CreatorProfile>();
     assert!(profile.total_posts == 0);
 
     publish_post(
+        &cap,
         &mut profile,
         b"Post 1".to_string(),
         b"Preview".to_string(),
         b"blob123".to_string(),
         true,
         &clock,
-        ts.ctx(),
     );
 
     assert!(profile.total_posts == 1);
     assert!(df::exists_(&profile.id, PostKey { post_id: 0 }));
 
+    ts.return_to_sender(cap);
     ts::return_shared(profile);
     clock.destroy_for_testing();
     ts.end();
@@ -169,45 +200,47 @@ fun test_has_post() {
 
     ts.next_tx(CREATOR_ADDR);
 
+    let cap = ts.take_from_sender<CreatorCap>();
     let mut profile = ts.take_shared<CreatorProfile>();
 
     assert!(!has_post(&profile, 0));
     assert!(!has_post(&profile, 1));
 
     publish_post(
+        &cap,
         &mut profile,
         b"Post 1".to_string(),
         b"Preview".to_string(),
         b"blob123".to_string(),
         true,
         &clock,
-        ts.ctx(),
     );
 
     assert!(has_post(&profile, 0));
     assert!(!has_post(&profile, 1));
 
     publish_post(
+        &cap,
         &mut profile,
         b"Post 2".to_string(),
         b"Preview 2".to_string(),
         b"blob456".to_string(),
         false,
         &clock,
-        ts.ctx(),
     );
 
     assert!(has_post(&profile, 0));
     assert!(has_post(&profile, 1));
     assert!(!has_post(&profile, 2));
 
+    ts.return_to_sender(cap);
     ts::return_shared(profile);
     clock.destroy_for_testing();
     ts.end();
 }
 
-#[test, expected_failure(abort_code = ENotOwner)]
-fun test_publish_post_not_owner_fails() {
+#[test, expected_failure(abort_code = EWrongProfile)]
+fun test_publish_post_wrong_cap_fails() {
     let mut ts = ts::begin(CREATOR_ADDR);
 
     let clock = clock::create_for_testing(ts.ctx());
@@ -220,22 +253,39 @@ fun test_publish_post_not_owner_fails() {
         ts.ctx(),
     );
 
-    // Try to post as different user
+    ts.next_tx(CREATOR_ADDR);
+
+    let first_profile = ts.take_shared<CreatorProfile>();
+    let first_profile_id = object::id(&first_profile);
+    ts::return_shared(first_profile);
+
     ts.next_tx(@0xCC);
 
-    let mut profile = ts.take_shared<CreatorProfile>();
+    register(
+        b"OtherCreator".to_string(),
+        b"Bio2".to_string(),
+        500,
+        &clock,
+        ts.ctx(),
+    );
+
+    ts.next_tx(@0xCC);
+
+    let wrong_cap = ts.take_from_sender<CreatorCap>();
+    let mut first_profile = ts.take_shared_by_id<CreatorProfile>(first_profile_id);
 
     publish_post(
-        &mut profile,
+        &wrong_cap,
+        &mut first_profile,
         b"Post 1".to_string(),
         b"Preview".to_string(),
         b"blob123".to_string(),
         true,
         &clock,
-        ts.ctx(),
     );
 
-    ts::return_shared(profile);
+    ts.return_to_sender(wrong_cap);
+    ts::return_shared(first_profile);
     clock.destroy_for_testing();
     ts.end();
 }
