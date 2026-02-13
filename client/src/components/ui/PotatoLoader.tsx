@@ -3,9 +3,10 @@
 interface PotatoLoaderProps {
   size?: "sm" | "md" | "lg";
   text?: string;
+  fullScreen?: boolean;
 }
 
-export function PotatoLoader({ size = "md", text }: PotatoLoaderProps) {
+export function PotatoLoader({ size = "md", text, fullScreen }: PotatoLoaderProps) {
   const sizes = {
     sm: 40,
     md: 60,
@@ -14,7 +15,7 @@ export function PotatoLoader({ size = "md", text }: PotatoLoaderProps) {
 
   const potatoSize = sizes[size];
 
-  return (
+  const content = (
     <div className="flex flex-col items-center justify-center gap-3">
       <div
         className="potato-bounce"
@@ -117,4 +118,14 @@ export function PotatoLoader({ size = "md", text }: PotatoLoaderProps) {
       `}</style>
     </div>
   );
+
+  if (fullScreen) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center z-40" style={{ backgroundColor: "var(--bg-primary)" }}>
+        {content}
+      </div>
+    );
+  }
+
+  return content;
 }

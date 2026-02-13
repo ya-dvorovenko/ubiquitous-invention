@@ -27,7 +27,7 @@ export default function PostViewPage() {
     return (
       <div className="page-container py-8">
         <div className="flex justify-center py-12">
-          <PotatoLoader size="lg" text="Loading post..." />
+          <PotatoLoader fullScreen size="lg" text="Loading post..." />
         </div>
       </div>
     );

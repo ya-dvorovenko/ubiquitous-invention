@@ -13,7 +13,7 @@ export function CreatorList({ creators, isLoading }: CreatorListProps) {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-16">
-        <PotatoLoader size="lg" text="Loading creators..." />
+        <PotatoLoader fullScreen size="lg" text="Loading creators..." />
       </div>
     );
   }

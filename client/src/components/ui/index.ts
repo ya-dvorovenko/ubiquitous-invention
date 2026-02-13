@@ -6,3 +6,4 @@ export { MediaGallery } from "./MediaGallery";
 export { MediaUpload } from "./MediaUpload";
 export { PotatoLoader } from "./PotatoLoader";
 export { SadPotato } from "./SadPotato";
+export { ToastProvider, useToast } from "./Toast";

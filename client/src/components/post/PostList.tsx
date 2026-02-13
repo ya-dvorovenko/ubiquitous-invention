@@ -18,7 +18,7 @@ export function PostList({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <PotatoLoader size="md" text="Loading posts..." />
+        <PotatoLoader fullScreen size="md" text="Loading posts..." />
       </div>
     );
   }

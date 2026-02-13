@@ -3,11 +3,12 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useRegisterCreator } from "@/hooks";
-import { Button, Card } from "@/components/ui";
+import { Button, Card, useToast } from "@/components/ui";
 
 export function RegisterForm() {
   const router = useRouter();
   const { register, isPending } = useRegisterCreator();
+  const { showToast } = useToast();
 
   const [name, setName] = useState("");
   const [bio, setBio] = useState("");
@@ -43,8 +44,10 @@ export function RegisterForm() {
         price: priceInMist,
       });
 
+      showToast("You're now a creator!", "success");
       router.push("/dashboard");
     } catch (err) {
+      showToast(err instanceof Error ? err.message : "Registration failed", "error");
       setError(err instanceof Error ? err.message : "Registration failed");
     }
   };

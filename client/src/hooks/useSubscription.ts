@@ -13,20 +13,22 @@ interface SubscriptionData {
   created_at: string;
 }
 
+interface SubscriptionNode {
+  address: string;
+  asMoveObject: {
+    contents: {
+      json: SubscriptionData;
+    };
+  };
+}
+
 interface SubscriptionsResponse {
   objects: {
     pageInfo: {
       hasNextPage: boolean;
       endCursor: string | null;
     };
-    nodes: Array<{
-      address: string;
-      asMoveObject: {
-        contents: {
-          json: SubscriptionData;
-        };
-      };
-    }>;
+    nodes: SubscriptionNode[];
   };
 }
 
@@ -38,7 +40,7 @@ async function fetchUserSubscriptions(
   let hasNextPage = true;
 
   while (hasNextPage) {
-    const data = await graphqlQuery<SubscriptionsResponse>(
+    const data: SubscriptionsResponse = await graphqlQuery<SubscriptionsResponse>(
       USER_SUBSCRIPTIONS_QUERY,
       {
         owner: ownerAddress,
@@ -46,7 +48,7 @@ async function fetchUserSubscriptions(
       }
     );
 
-    for (const node of data.objects.nodes) {
+    for (const node of data.objects.nodes as SubscriptionNode[]) {
       const sub = node.asMoveObject.contents.json;
       subscriptions.push({
         id: node.address,
@@ -67,7 +69,7 @@ async function fetchUserSubscriptions(
 export function useUserSubscriptions() {
   const currentAccount = useCurrentAccount();
 
-  return useQuery({
+  return useQuery<Subscription[]>({
     queryKey: ["subscriptions", currentAccount?.address],
     queryFn: () => fetchUserSubscriptions(currentAccount!.address),
     enabled: !!currentAccount?.address,
