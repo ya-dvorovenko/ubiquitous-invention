@@ -4,10 +4,8 @@ use std::string::String;
 use sui::clock::Clock;
 use sui::dynamic_field as df;
 use sui::event;
-use sui::package::{Self, Publisher};
 
 const ENotOwner: u64 = 0;
-const EWrongPublisher: u64 = 1;
 
 public struct CREATOR has drop {}
 
@@ -46,19 +44,13 @@ public struct CreatorRegistered has copy, drop {
     name: String,
 }
 
-fun init(otw: CREATOR, ctx: &mut TxContext) {
-    package::claim_and_keep(otw, ctx);
-}
-
 entry fun register(
-    publisher: &Publisher,
     name: String,
     bio: String,
     price: u64,
     clock: &Clock,
     ctx: &mut TxContext,
 ) {
-    assert!(publisher.from_module<CREATOR>(), EWrongPublisher);
     let profile = CreatorProfile {
         id: object::new(ctx),
         owner: ctx.sender(),
@@ -116,39 +108,24 @@ public fun has_post(p: &CreatorProfile, post_id: u64): bool {
 }
 
 #[test_only]
-public fun init_for_testing(ctx: &mut TxContext) {
-    init(CREATOR {}, ctx);
-}
-
-#[test_only]
 use sui::{test_scenario as ts, clock};
 
-#[test_only]
-const ADMIN: address = @0xAA;
 #[test_only]
 const CREATOR_ADDR: address = @0xBB;
 
 #[test]
 fun test_register_and_publish_post() {
-    let mut ts = ts::begin(ADMIN);
+    let mut ts = ts::begin(CREATOR_ADDR);
 
-    init_for_testing(ts.ctx());
-
-    ts.next_tx(CREATOR_ADDR);
-
-    let publisher = ts.take_from_address<Publisher>(ADMIN);
     let clock = clock::create_for_testing(ts.ctx());
 
     register(
-        &publisher,
         b"TestCreator".to_string(),
         b"Bio".to_string(),
         1000,
         &clock,
         ts.ctx(),
     );
-
-    transfer::public_transfer(publisher, ADMIN);
 
     ts.next_tx(CREATOR_ADDR);
 
@@ -175,25 +152,17 @@ fun test_register_and_publish_post() {
 
 #[test]
 fun test_has_post() {
-    let mut ts = ts::begin(ADMIN);
+    let mut ts = ts::begin(CREATOR_ADDR);
 
-    init_for_testing(ts.ctx());
-
-    ts.next_tx(CREATOR_ADDR);
-
-    let publisher = ts.take_from_address<Publisher>(ADMIN);
     let clock = clock::create_for_testing(ts.ctx());
 
     register(
-        &publisher,
         b"TestCreator".to_string(),
         b"Bio".to_string(),
         1000,
         &clock,
         ts.ctx(),
     );
-
-    transfer::public_transfer(publisher, ADMIN);
 
     ts.next_tx(CREATOR_ADDR);
 
@@ -236,25 +205,17 @@ fun test_has_post() {
 
 #[test, expected_failure(abort_code = ENotOwner)]
 fun test_publish_post_not_owner_fails() {
-    let mut ts = ts::begin(ADMIN);
+    let mut ts = ts::begin(CREATOR_ADDR);
 
-    init_for_testing(ts.ctx());
-
-    ts.next_tx(CREATOR_ADDR);
-
-    let publisher = ts.take_from_address<Publisher>(ADMIN);
     let clock = clock::create_for_testing(ts.ctx());
 
     register(
-        &publisher,
         b"TestCreator".to_string(),
         b"Bio".to_string(),
         1000,
         &clock,
         ts.ctx(),
     );
-
-    transfer::public_transfer(publisher, ADMIN);
 
     // Try to post as different user
     ts.next_tx(@0xCC);

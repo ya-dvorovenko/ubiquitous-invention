@@ -72,33 +72,23 @@ public fun is_subscribed(p: &CreatorProfile, addr: address): bool {
 use sui::{test_scenario as ts, clock, coin};
 
 #[test_only]
-const ADMIN: address = @0xAA;
-#[test_only]
 const CREATOR_ADDR: address = @0xBB;
 #[test_only]
 const SUBSCRIBER: address = @0xCC;
 
 #[test]
 fun test_subscribe() {
-    let mut ts = ts::begin(ADMIN);
+    let mut ts = ts::begin(CREATOR_ADDR);
 
-    suipatron::creator::init_for_testing(ts.ctx());
-
-    ts.next_tx(CREATOR_ADDR);
-
-    let publisher = ts.take_from_address<sui::package::Publisher>(ADMIN);
     let clock = clock::create_for_testing(ts.ctx());
 
     suipatron::creator::register(
-        &publisher,
         b"Creator".to_string(),
         b"Bio".to_string(),
         1000,
         &clock,
         ts.ctx(),
     );
-
-    transfer::public_transfer(publisher, ADMIN);
 
     ts.next_tx(SUBSCRIBER);
 
@@ -119,25 +109,17 @@ fun test_subscribe() {
 
 #[test]
 fun test_is_subscribed() {
-    let mut ts = ts::begin(ADMIN);
+    let mut ts = ts::begin(CREATOR_ADDR);
 
-    suipatron::creator::init_for_testing(ts.ctx());
-
-    ts.next_tx(CREATOR_ADDR);
-
-    let publisher = ts.take_from_address<sui::package::Publisher>(ADMIN);
     let clock = clock::create_for_testing(ts.ctx());
 
     suipatron::creator::register(
-        &publisher,
         b"Creator".to_string(),
         b"Bio".to_string(),
         1000,
         &clock,
         ts.ctx(),
     );
-
-    transfer::public_transfer(publisher, ADMIN);
 
     ts.next_tx(SUBSCRIBER);
 
@@ -166,25 +148,17 @@ fun test_is_subscribed() {
 
 #[test, expected_failure(abort_code = EInsufficientPayment)]
 fun test_subscribe_insufficient_payment() {
-    let mut ts = ts::begin(ADMIN);
+    let mut ts = ts::begin(CREATOR_ADDR);
 
-    suipatron::creator::init_for_testing(ts.ctx());
-
-    ts.next_tx(CREATOR_ADDR);
-
-    let publisher = ts.take_from_address<sui::package::Publisher>(ADMIN);
     let clock = clock::create_for_testing(ts.ctx());
 
     suipatron::creator::register(
-        &publisher,
         b"Creator".to_string(),
         b"Bio".to_string(),
         1000,
         &clock,
         ts.ctx(),
     );
-
-    transfer::public_transfer(publisher, ADMIN);
 
     ts.next_tx(SUBSCRIBER);
 
@@ -200,25 +174,17 @@ fun test_subscribe_insufficient_payment() {
 
 #[test, expected_failure(abort_code = EAlreadySubscribed)]
 fun test_subscribe_twice_fails() {
-    let mut ts = ts::begin(ADMIN);
+    let mut ts = ts::begin(CREATOR_ADDR);
 
-    suipatron::creator::init_for_testing(ts.ctx());
-
-    ts.next_tx(CREATOR_ADDR);
-
-    let publisher = ts.take_from_address<sui::package::Publisher>(ADMIN);
     let clock = clock::create_for_testing(ts.ctx());
 
     suipatron::creator::register(
-        &publisher,
         b"Creator".to_string(),
         b"Bio".to_string(),
         1000,
         &clock,
         ts.ctx(),
     );
-
-    transfer::public_transfer(publisher, ADMIN);
 
     ts.next_tx(SUBSCRIBER);
 

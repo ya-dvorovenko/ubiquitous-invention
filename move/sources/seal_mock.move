@@ -51,33 +51,23 @@ entry fun assert_access(
 use sui::{test_scenario as ts, clock, coin, sui::SUI};
 
 #[test_only]
-const ADMIN: address = @0xAA;
-#[test_only]
 const CREATOR_ADDR: address = @0xBB;
 #[test_only]
 const SUBSCRIBER: address = @0xCC;
 
 #[test]
 fun test_full_flow() {
-    let mut ts = ts::begin(ADMIN);
+    let mut ts = ts::begin(CREATOR_ADDR);
 
-    suipatron::creator::init_for_testing(ts.ctx());
-
-    ts.next_tx(CREATOR_ADDR);
-
-    let publisher = ts.take_from_address<sui::package::Publisher>(ADMIN);
     let clock = clock::create_for_testing(ts.ctx());
 
     suipatron::creator::register(
-        &publisher,
         b"TestCreator".to_string(),
         b"Test bio".to_string(),
         1000,
         &clock,
         ts.ctx(),
     );
-
-    transfer::public_transfer(publisher, ADMIN);
 
     ts.next_tx(CREATOR_ADDR);
 
@@ -117,25 +107,17 @@ fun test_full_flow() {
 
 #[test, expected_failure(abort_code = EWrongProfile)]
 fun test_assert_access_wrong_profile() {
-    let mut ts = ts::begin(ADMIN);
+    let mut ts = ts::begin(CREATOR_ADDR);
 
-    suipatron::creator::init_for_testing(ts.ctx());
-
-    ts.next_tx(CREATOR_ADDR);
-
-    let publisher = ts.take_from_address<sui::package::Publisher>(ADMIN);
     let clock = clock::create_for_testing(ts.ctx());
 
     suipatron::creator::register(
-        &publisher,
         b"Creator1".to_string(),
         b"Bio".to_string(),
         1000,
         &clock,
         ts.ctx(),
     );
-
-    transfer::public_transfer(publisher, ADMIN);
 
     ts.next_tx(SUBSCRIBER);
 
@@ -158,25 +140,17 @@ fun test_assert_access_wrong_profile() {
 
 #[test, expected_failure(abort_code = EExpired)]
 fun test_assert_access_expired() {
-    let mut ts = ts::begin(ADMIN);
+    let mut ts = ts::begin(CREATOR_ADDR);
 
-    suipatron::creator::init_for_testing(ts.ctx());
-
-    ts.next_tx(CREATOR_ADDR);
-
-    let publisher = ts.take_from_address<sui::package::Publisher>(ADMIN);
     let mut clock = clock::create_for_testing(ts.ctx());
 
     suipatron::creator::register(
-        &publisher,
         b"Creator1".to_string(),
         b"Bio".to_string(),
         1000,
         &clock,
         ts.ctx(),
     );
-
-    transfer::public_transfer(publisher, ADMIN);
 
     ts.next_tx(SUBSCRIBER);
 
@@ -203,25 +177,17 @@ fun test_assert_access_expired() {
 
 #[test]
 fun test_seal_approve_success() {
-    let mut ts = ts::begin(ADMIN);
+    let mut ts = ts::begin(CREATOR_ADDR);
 
-    suipatron::creator::init_for_testing(ts.ctx());
-
-    ts.next_tx(CREATOR_ADDR);
-
-    let publisher = ts.take_from_address<sui::package::Publisher>(ADMIN);
     let clock = clock::create_for_testing(ts.ctx());
 
     suipatron::creator::register(
-        &publisher,
         b"Creator1".to_string(),
         b"Bio".to_string(),
         1000,
         &clock,
         ts.ctx(),
     );
-
-    transfer::public_transfer(publisher, ADMIN);
 
     ts.next_tx(SUBSCRIBER);
 
@@ -251,17 +217,11 @@ fun test_seal_approve_success() {
 
 #[test, expected_failure(abort_code = EWrongProfile)]
 fun test_seal_approve_wrong_profile() {
-    let mut ts = ts::begin(ADMIN);
+    let mut ts = ts::begin(CREATOR_ADDR);
 
-    suipatron::creator::init_for_testing(ts.ctx());
-
-    ts.next_tx(CREATOR_ADDR);
-
-    let publisher = ts.take_from_address<sui::package::Publisher>(ADMIN);
     let clock = clock::create_for_testing(ts.ctx());
 
     suipatron::creator::register(
-        &publisher,
         b"Creator1".to_string(),
         b"Bio".to_string(),
         1000,
@@ -269,20 +229,15 @@ fun test_seal_approve_wrong_profile() {
         ts.ctx(),
     );
 
-    transfer::public_transfer(publisher, ADMIN);
-
     ts.next_tx(@0xDD);
 
-    let publisher2 = ts.take_from_address<sui::package::Publisher>(ADMIN);
     suipatron::creator::register(
-        &publisher2,
         b"Creator2".to_string(),
         b"Bio2".to_string(),
         500,
         &clock,
         ts.ctx(),
     );
-    transfer::public_transfer(publisher2, ADMIN);
 
     ts.next_tx(SUBSCRIBER);
 
@@ -311,25 +266,17 @@ fun test_seal_approve_wrong_profile() {
 
 #[test, expected_failure(abort_code = EExpired)]
 fun test_seal_approve_expired() {
-    let mut ts = ts::begin(ADMIN);
+    let mut ts = ts::begin(CREATOR_ADDR);
 
-    suipatron::creator::init_for_testing(ts.ctx());
-
-    ts.next_tx(CREATOR_ADDR);
-
-    let publisher = ts.take_from_address<sui::package::Publisher>(ADMIN);
     let mut clock = clock::create_for_testing(ts.ctx());
 
     suipatron::creator::register(
-        &publisher,
         b"Creator1".to_string(),
         b"Bio".to_string(),
         1000,
         &clock,
         ts.ctx(),
     );
-
-    transfer::public_transfer(publisher, ADMIN);
 
     ts.next_tx(SUBSCRIBER);
 
@@ -359,25 +306,17 @@ fun test_seal_approve_expired() {
 
 #[test, expected_failure(abort_code = ENoAccess)]
 fun test_seal_approve_wrong_id_prefix() {
-    let mut ts = ts::begin(ADMIN);
+    let mut ts = ts::begin(CREATOR_ADDR);
 
-    suipatron::creator::init_for_testing(ts.ctx());
-
-    ts.next_tx(CREATOR_ADDR);
-
-    let publisher = ts.take_from_address<sui::package::Publisher>(ADMIN);
     let clock = clock::create_for_testing(ts.ctx());
 
     suipatron::creator::register(
-        &publisher,
         b"Creator1".to_string(),
         b"Bio".to_string(),
         1000,
         &clock,
         ts.ctx(),
     );
-
-    transfer::public_transfer(publisher, ADMIN);
 
     ts.next_tx(SUBSCRIBER);
 
