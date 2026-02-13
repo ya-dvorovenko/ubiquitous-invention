@@ -36,7 +36,7 @@ export default function RegisterCreatorPage() {
           <ConnectWalletPrompt />
         ) : isLoading ? (
           <div className="flex justify-center py-8">
-            <PotatoLoader />
+            <PotatoLoader fullScreen />
           </div>
         ) : isCreator && creatorProfile ? (
           <AlreadyCreator creator={creatorProfile} />

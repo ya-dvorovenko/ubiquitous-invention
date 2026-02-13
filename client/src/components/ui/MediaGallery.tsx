@@ -6,7 +6,7 @@ import { PostMedia } from "@/types";
 
 interface MediaGalleryProps {
   media: PostMedia[];
-  blur?: boolean; // For locked content preview
+  blur?: boolean;
 }
 
 export function MediaGallery({ media, blur = false }: MediaGalleryProps) {
@@ -59,7 +59,6 @@ export function MediaGallery({ media, blur = false }: MediaGalleryProps) {
               </div>
             )}
 
-            {/* Blur overlay for locked content */}
             {blur && (
               <div className="absolute inset-0 flex items-center justify-center bg-black/30">
                 <svg
@@ -81,7 +80,6 @@ export function MediaGallery({ media, blur = false }: MediaGalleryProps) {
         ))}
       </div>
 
-      {/* Lightbox Modal */}
       {selectedIndex !== null && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/90"
@@ -106,7 +104,6 @@ export function MediaGallery({ media, blur = false }: MediaGalleryProps) {
             </svg>
           </button>
 
-          {/* Navigation arrows */}
           {media.length > 1 && (
             <>
               <button
@@ -178,7 +175,6 @@ export function MediaGallery({ media, blur = false }: MediaGalleryProps) {
             )}
           </div>
 
-          {/* Counter */}
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/70 text-sm">
             {selectedIndex + 1} / {media.length}
           </div>

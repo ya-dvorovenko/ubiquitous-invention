@@ -5,7 +5,7 @@ import { useCurrentAccount } from "@mysten/dapp-kit";
 import { BackLink, NotFound } from "@/components/common";
 import { CreatorHeader } from "@/components/creator";
 import { PostList } from "@/components/post";
-import { PotatoLoader } from "@/components/ui";
+import { PotatoLoader, useToast } from "@/components/ui";
 import {
   useCreatorByAddress,
   useCreatorPosts,
@@ -17,6 +17,7 @@ export default function CreatorProfilePage() {
   const params = useParams();
   const address = params.address as string;
   const currentAccount = useCurrentAccount();
+  const { showToast } = useToast();
 
   const { data: creator, isLoading: isLoadingCreator } = useCreatorByAddress(address);
   const { data: posts, isLoading: isLoadingPosts } = useCreatorPosts(
@@ -26,24 +27,27 @@ export default function CreatorProfilePage() {
   const { isSubscribed } = useIsSubscribed(creator?.profileId || "");
   const { subscribe, isPending: isSubscribing } = useSubscribe();
 
+  const isOwnProfile = currentAccount?.address === address;
+
   const handleSubscribe = async () => {
-    if (!creator?.profileId || !currentAccount) return;
+    if (!creator?.profileId || !currentAccount || isOwnProfile) return;
 
     try {
       await subscribe({
         profileId: creator.profileId,
         price: creator.subscriptionPrice,
       });
+      showToast(`Subscribed to ${creator.name}!`, "success");
     } catch (error) {
       console.error("Subscribe failed:", error);
-      alert(error instanceof Error ? error.message : "Subscribe failed");
+      showToast(error instanceof Error ? error.message : "Subscribe failed", "error");
     }
   };
 
   if (isLoadingCreator) {
     return (
       <div className="page-container py-8 flex justify-center">
-        <PotatoLoader />
+        <PotatoLoader fullScreen />
       </div>
     );
   }
@@ -59,9 +63,10 @@ export default function CreatorProfilePage() {
       <CreatorHeader
         creator={creator}
         postsCount={posts?.length || 0}
-        isSubscribed={isSubscribed}
+        isSubscribed={isSubscribed || isOwnProfile}
         isSubscribing={isSubscribing}
-        onSubscribe={handleSubscribe}
+        onSubscribe={isOwnProfile ? undefined : handleSubscribe}
+        isOwnProfile={isOwnProfile}
       />
 
       <h2
@@ -73,7 +78,7 @@ export default function CreatorProfilePage() {
 
       {isLoadingPosts ? (
         <div className="flex justify-center py-8">
-          <PotatoLoader />
+          <PotatoLoader fullScreen />
         </div>
       ) : (
         <PostList posts={posts || []} emptyMessage="No posts yet" />

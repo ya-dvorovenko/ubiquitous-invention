@@ -30,7 +30,7 @@ export default function SubscriptionsPage() {
           My Subscriptions
         </h1>
         <div className="flex justify-center py-12">
-          <PotatoLoader size="lg" text="Loading subscriptions..." />
+          <PotatoLoader fullScreen size="lg" text="Loading subscriptions..." />
         </div>
       </div>
     );

@@ -13,7 +13,6 @@ export default function Home() {
   const { resolveNameToAddress } = useSuiNS();
   const { data: creators, isLoading, error } = useCreators();
 
-  // Local search - always runs first
   const localResults = useMemo(() => {
     if (!creators) return [];
     if (!searchQuery.trim()) return creators;
@@ -29,11 +28,9 @@ export default function Home() {
     );
   }, [searchQuery, creators]);
 
-  // Only resolve SuiNS if no local results found
   useEffect(() => {
     const query = searchQuery.trim().toLowerCase();
 
-    // Skip SuiNS lookup if: empty, is address, or found locally
     if (!query || query.startsWith("0x") || localResults.length > 0) {
       setResolvedAddress(null);
       setIsResolvingSuiNS(false);
@@ -51,7 +48,6 @@ export default function Home() {
     return () => clearTimeout(timeoutId);
   }, [searchQuery, localResults.length, resolveNameToAddress]);
 
-  // Final results: prefer SuiNS resolved, fallback to local
   const filteredCreators = useMemo(() => {
     if (!creators) return [];
     if (resolvedAddress) {

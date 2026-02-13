@@ -49,7 +49,7 @@ export default function DashboardPage() {
     return (
       <div className="page-container py-8">
         <div className="flex justify-center py-12">
-          <PotatoLoader size="lg" text="Loading..." />
+          <PotatoLoader fullScreen size="lg" text="Loading..." />
         </div>
       </div>
     );
@@ -89,7 +89,7 @@ export default function DashboardPage() {
           </h2>
           {isPostsLoading ? (
             <div className="flex justify-center py-8">
-              <PotatoLoader text="Loading posts..." />
+              <PotatoLoader fullScreen text="Loading posts..." />
             </div>
           ) : (
             <PostList

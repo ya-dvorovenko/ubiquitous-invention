@@ -14,18 +14,20 @@ interface CreatorRegisteredEvent {
   name: string;
 }
 
+interface EventNode {
+  timestamp: string;
+  contents: {
+    json: CreatorRegisteredEvent;
+  };
+}
+
 interface EventsResponse {
   events: {
     pageInfo: {
       hasNextPage: boolean;
       endCursor: string | null;
     };
-    nodes: Array<{
-      timestamp: string;
-      contents: {
-        json: CreatorRegisteredEvent;
-      };
-    }>;
+    nodes: EventNode[];
   };
 }
 
@@ -78,15 +80,15 @@ async function fetchAllCreators(): Promise<Creator[]> {
   let hasNextPage = true;
 
   while (hasNextPage) {
-    const data = await graphqlQuery<EventsResponse>(
+    const data: EventsResponse = await graphqlQuery<EventsResponse>(
       CREATOR_REGISTERED_EVENTS_QUERY,
       { after: cursor }
     );
 
-    const profileIds = data.events.nodes.map((node) => node.contents.json.profile_id);
+    const profileIds = data.events.nodes.map((node: EventNode) => node.contents.json.profile_id);
 
     const profiles = await Promise.all(
-      profileIds.map((id) => fetchCreatorProfile(id))
+      profileIds.map((id: string) => fetchCreatorProfile(id))
     );
 
     creators.push(...profiles.filter((p): p is Creator => p !== null));
@@ -99,7 +101,7 @@ async function fetchAllCreators(): Promise<Creator[]> {
 }
 
 export function useCreators() {
-  return useQuery({
+  return useQuery<Creator[]>({
     queryKey: ["creators"],
     queryFn: fetchAllCreators,
     staleTime: 30000,
@@ -118,7 +120,7 @@ export function useCreatorByAddress(address: string) {
 }
 
 export function useCreatorByProfileId(profileId: string) {
-  return useQuery({
+  return useQuery<Creator | null>({
     queryKey: ["creator", profileId],
     queryFn: () => fetchCreatorProfile(profileId),
     enabled: !!profileId,

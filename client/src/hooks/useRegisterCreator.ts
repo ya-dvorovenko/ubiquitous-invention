@@ -30,8 +30,8 @@ export function useRegisterCreator() {
 
     const result = await sponsorAndExecute(tx);
 
-    // Invalidate creators cache
     queryClient.invalidateQueries({ queryKey: ["creators"] });
+    queryClient.invalidateQueries({ queryKey: ["isCreator"] });
 
     return result;
   };

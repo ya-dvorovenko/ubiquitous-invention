@@ -10,6 +10,7 @@ interface CreatorHeaderProps {
   isSubscribed: boolean;
   isSubscribing?: boolean;
   onSubscribe?: () => void;
+  isOwnProfile?: boolean;
 }
 
 export function CreatorHeader({
@@ -18,6 +19,7 @@ export function CreatorHeader({
   isSubscribed,
   isSubscribing,
   onSubscribe,
+  isOwnProfile,
 }: CreatorHeaderProps) {
   return (
     <div
@@ -47,7 +49,9 @@ export function CreatorHeader({
               </p>
             </div>
 
-            {isSubscribed ? (
+            {isOwnProfile ? (
+              <Badge variant="default">Your Profile</Badge>
+            ) : isSubscribed ? (
               <Badge variant="success">Subscribed</Badge>
             ) : (
               <Button onClick={onSubscribe} disabled={isSubscribing}>
