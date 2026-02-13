@@ -1,9 +1,9 @@
 "use client";
 
-import { useSignAndExecuteTransaction, useSuiClient } from "@mysten/dapp-kit";
 import { Transaction } from "@mysten/sui/transactions";
 import { useQueryClient } from "@tanstack/react-query";
-import { TARGETS, CLOCK_ID, PUBLISHER_ID } from "@/config/constants";
+import { TARGETS, CLOCK_ID } from "@/config/constants";
+import { useSponsoredTransaction } from "./useSponsoredTransaction";
 
 interface RegisterCreatorParams {
   name: string;
@@ -12,10 +12,8 @@ interface RegisterCreatorParams {
 }
 
 export function useRegisterCreator() {
-  const suiClient = useSuiClient();
   const queryClient = useQueryClient();
-  const { mutateAsync: signAndExecute, isPending } =
-    useSignAndExecuteTransaction();
+  const { sponsorAndExecute, isPending } = useSponsoredTransaction();
 
   const register = async ({ name, bio, price }: RegisterCreatorParams) => {
     const tx = new Transaction();
@@ -23,7 +21,6 @@ export function useRegisterCreator() {
     tx.moveCall({
       target: TARGETS.register,
       arguments: [
-        tx.object(PUBLISHER_ID),
         tx.pure.string(name),
         tx.pure.string(bio),
         tx.pure.u64(price),
@@ -31,13 +28,7 @@ export function useRegisterCreator() {
       ],
     });
 
-    const result = await signAndExecute({
-      transaction: tx,
-    });
-
-    await suiClient.waitForTransaction({
-      digest: result.digest,
-    });
+    const result = await sponsorAndExecute(tx);
 
     // Invalidate creators cache
     queryClient.invalidateQueries({ queryKey: ["creators"] });

@@ -1,9 +1,9 @@
 "use client";
 
-import { useSignAndExecuteTransaction, useSuiClient } from "@mysten/dapp-kit";
 import { Transaction } from "@mysten/sui/transactions";
 import { useQueryClient } from "@tanstack/react-query";
 import { TARGETS, CLOCK_ID } from "@/config/constants";
+import { useSponsoredTransaction } from "./useSponsoredTransaction";
 
 interface SubscribeParams {
   profileId: string;
@@ -11,10 +11,8 @@ interface SubscribeParams {
 }
 
 export function useSubscribe() {
-  const suiClient = useSuiClient();
   const queryClient = useQueryClient();
-  const { mutateAsync: signAndExecute, isPending } =
-    useSignAndExecuteTransaction();
+  const { sponsorAndExecute, isPending } = useSponsoredTransaction();
 
   const subscribe = async ({ profileId, price }: SubscribeParams) => {
     const tx = new Transaction();
@@ -32,14 +30,7 @@ export function useSubscribe() {
       ],
     });
 
-    const result = await signAndExecute({
-      transaction: tx,
-    });
-
-    // Wait for transaction to be confirmed
-    await suiClient.waitForTransaction({
-      digest: result.digest,
-    });
+    const result = await sponsorAndExecute(tx);
 
     // Invalidate subscriptions cache
     queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
