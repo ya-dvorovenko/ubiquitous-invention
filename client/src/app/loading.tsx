@@ -3,11 +3,5 @@
 import { PotatoLoader } from "@/components/ui";
 
 export default function Loading() {
-  return (
-    <div className="page-container py-16">
-      <div className="flex items-center justify-center min-h-[50vh]">
-        <PotatoLoader size="lg" text="Loading..." />
-      </div>
-    </div>
-  );
+  return <PotatoLoader size="lg" text="Loading..." fullScreen />;
 }

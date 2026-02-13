@@ -9,6 +9,7 @@ import { ClientWithCoreApi } from "@mysten/sui/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactNode, useState, useEffect } from "react";
 import { registerEnokiWallets } from "@mysten/enoki";
+import { ToastProvider } from "@/components/ui/Toast";
 
 import "@mysten/dapp-kit/dist/index.css";
 
@@ -66,7 +67,7 @@ export function SuiProvider({ children }: SuiProviderProps) {
       <SuiClientProvider networks={networks} defaultNetwork={SUI_NETWORK}>
         <WalletProvider autoConnect preferredWallets={["Sign in with Google"]}>
           <RegisterEnokiWalletsComponent />
-          {children}
+          <ToastProvider>{children}</ToastProvider>
         </WalletProvider>
       </SuiClientProvider>
     </QueryClientProvider>

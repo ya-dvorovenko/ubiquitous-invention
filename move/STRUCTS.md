@@ -81,4 +81,6 @@ has copy, drop
 
 ## seal_mock.move
 
-No structs (uses Subscription from subscription.move)
+No structs. Uses `Subscription` from subscription.move and `CreatorProfile` from creator.move.
+
+**Integration**: `seal_approve(id, sub, profile, clock)` — policy gate for Seal decryption. Key format: `id = [profile.id.to_bytes()][nonce]`. See [move/README.md](./README.md).

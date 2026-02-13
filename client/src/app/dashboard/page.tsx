@@ -1,15 +1,17 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import {
   useCurrentAccount,
   useSuiClient,
   useSignAndExecuteTransaction,
 } from "@mysten/dapp-kit";
+import { useIsCreator, useCreatorPosts } from "@/hooks";
 import { WalrusClient, WalrusFile } from "@mysten/walrus";
 import { SealClient, SessionKey } from "@mysten/seal";
 import { CreatePostForm } from "@/components/dashboard";
 import { PostList } from "@/components/post";
-import { getPostsByCreator } from "@/data/mock";
+import { PotatoLoader } from "@/components/ui";
 import { ClientWithCoreApi } from "@mysten/sui/client";
 import { CLOCK_ID, sealObjectIds, TARGETS } from "@/config/constants";
 import { Transaction } from "@mysten/sui/transactions";
@@ -21,15 +23,21 @@ interface MediaFile {
 }
 
 export default function DashboardPage() {
+  const router = useRouter();
   const suiClient = useSuiClient() as ClientWithCoreApi;
   const currentAccount = useCurrentAccount();
-
+  const {
+    isCreator,
+    creatorProfile,
+    isLoading: isCreatorLoading,
+  } = useIsCreator();
   const { mutateAsync: signAndExecuteTransaction } =
     useSignAndExecuteTransaction();
 
-  const creatorPosts = currentAccount
-    ? getPostsByCreator(currentAccount.address)
-    : [];
+  const { data: posts, isLoading: isPostsLoading } = useCreatorPosts(
+    creatorProfile?.profileId || "",
+    creatorProfile?.address || "",
+  );
 
   const handlePublish = async ({
     title,
@@ -215,6 +223,44 @@ export default function DashboardPage() {
     );
   }
 
+  if (isCreatorLoading) {
+    return (
+      <div className="page-container py-8">
+        <div className="flex justify-center py-12">
+          <PotatoLoader fullScreen size="lg" text="Loading..." />
+        </div>
+      </div>
+    );
+  }
+
+  if (!isCreator) {
+    return (
+      <div className="page-container py-8">
+        <div className="text-center">
+          <h1
+            className="text-2xl font-bold mb-4"
+            style={{ color: "var(--text-primary)" }}
+          >
+            Creator Dashboard
+          </h1>
+          <p style={{ color: "var(--text-secondary)" }} className="mb-4">
+            You need to be a creator to access this page.
+          </p>
+          <button
+            onClick={() => router.push("/register")}
+            className="px-4 py-2 rounded-lg"
+            style={{
+              backgroundColor: "var(--accent-primary)",
+              color: "var(--text-on-accent)",
+            }}
+          >
+            Become a Creator
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="page-container py-8">
       <h1
@@ -240,12 +286,18 @@ export default function DashboardPage() {
             className="text-xl font-bold mb-4"
             style={{ color: "var(--text-primary)" }}
           >
-            Your Posts
+            Your Posts ({posts?.length || 0})
           </h2>
-          <PostList
-            posts={creatorPosts}
-            emptyMessage="You haven't published any posts yet"
-          />
+          {isPostsLoading ? (
+            <div className="flex justify-center py-8">
+              <PotatoLoader fullScreen text="Loading posts..." />
+            </div>
+          ) : (
+            <PostList
+              posts={posts || []}
+              emptyMessage="You haven't published any posts yet"
+            />
+          )}
         </div>
       </div>
     </div>

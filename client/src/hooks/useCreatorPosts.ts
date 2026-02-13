@@ -14,6 +14,15 @@ interface PostData {
   created_at: string;
 }
 
+interface DynamicFieldNode {
+  name: {
+    json: { post_id: string };
+  };
+  value: {
+    json: PostData;
+  };
+}
+
 interface DynamicFieldsResponse {
   object: {
     dynamicFields: {
@@ -21,14 +30,7 @@ interface DynamicFieldsResponse {
         hasNextPage: boolean;
         endCursor: string | null;
       };
-      nodes: Array<{
-        name: {
-          json: { post_id: string };
-        };
-        value: {
-          json: PostData;
-        };
-      }>;
+      nodes: DynamicFieldNode[];
     };
   } | null;
 }
@@ -42,7 +44,7 @@ async function fetchCreatorPosts(
   let hasNextPage = true;
 
   while (hasNextPage) {
-    const data = await graphqlQuery<DynamicFieldsResponse>(
+    const data: DynamicFieldsResponse = await graphqlQuery<DynamicFieldsResponse>(
       CREATOR_POSTS_QUERY,
       {
         profileId,
@@ -52,11 +54,10 @@ async function fetchCreatorPosts(
 
     if (!data.object?.dynamicFields) break;
 
-    const nodes = data.object.dynamicFields.nodes;
+    const nodes: DynamicFieldNode[] = data.object.dynamicFields.nodes;
 
-    // Filter only PostKey dynamic fields (they have post_id in name)
     const postNodes = nodes.filter(
-      (node) => node.name?.json?.post_id !== undefined
+      (node: DynamicFieldNode) => node.name?.json?.post_id !== undefined
     );
 
     for (const node of postNodes) {
@@ -76,12 +77,11 @@ async function fetchCreatorPosts(
     cursor = data.object.dynamicFields.pageInfo.endCursor;
   }
 
-  // Sort by post_id descending (newest first)
   return posts.sort((a, b) => parseInt(b.id, 10) - parseInt(a.id, 10));
 }
 
 export function useCreatorPosts(profileId: string, creatorAddress: string) {
-  return useQuery({
+  return useQuery<Post[]>({
     queryKey: ["creatorPosts", profileId],
     queryFn: () => fetchCreatorPosts(profileId, creatorAddress),
     enabled: !!profileId && !!creatorAddress,

@@ -7,6 +7,7 @@ move/Published.toml
 # Sui
 .sui/
 examples/**
+more_seal/**
 
 # Dependencies
 node_modules/

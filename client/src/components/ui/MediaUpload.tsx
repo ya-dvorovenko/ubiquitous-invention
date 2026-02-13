@@ -62,7 +62,6 @@ export function MediaUpload({ files, onFilesChange, maxFiles = 5 }: MediaUploadP
         Media (optional)
       </label>
 
-      {/* Upload Area */}
       <div
         onClick={() => inputRef.current?.click()}
         className="border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-colors hover:border-[var(--accent)]"
@@ -103,7 +102,6 @@ export function MediaUpload({ files, onFilesChange, maxFiles = 5 }: MediaUploadP
         </p>
       </div>
 
-      {/* Preview Grid */}
       {files.length > 0 && (
         <div className="grid grid-cols-3 gap-3 mt-4">
           {files.map((media, index) => (
@@ -126,7 +124,6 @@ export function MediaUpload({ files, onFilesChange, maxFiles = 5 }: MediaUploadP
                 />
               )}
 
-              {/* Video indicator */}
               {media.type === "video" && (
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div
@@ -145,7 +142,6 @@ export function MediaUpload({ files, onFilesChange, maxFiles = 5 }: MediaUploadP
                 </div>
               )}
 
-              {/* Remove button */}
               <button
                 onClick={(e) => {
                   e.stopPropagation();

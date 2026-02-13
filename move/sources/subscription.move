@@ -5,17 +5,20 @@ use sui::sui::SUI;
 use sui::clock::Clock;
 use sui::dynamic_field as df;
 use sui::event;
+use sui::package;
+use sui::display;
 use suipatron::creator::{Self, CreatorProfile};
 
 const EInsufficientPayment: u64 = 0;
 const EAlreadySubscribed: u64 = 1;
 
+public struct SUBSCRIPTION has drop {}
 
 public struct Subscription has key, store {
     id: UID,
     profile_id: ID,
     expires_at: u64,
-    created_at: u64, // With indexer we could remove it
+    created_at: u64,
 }
 
 public struct Subscribed has copy, drop {
@@ -26,9 +29,22 @@ public struct Subscribed has copy, drop {
     expires_at: u64,
 }
 
+fun init(otw: SUBSCRIPTION, ctx: &mut TxContext) {
+    let publisher = package::claim(otw, ctx);
+
+    let mut sub_display = display::new<Subscription>(&publisher, ctx);
+    sub_display.add(b"name".to_string(), b"SuiPatron Subscription".to_string());
+    sub_display.add(b"description".to_string(), b"Active subscription to creator".to_string());
+    sub_display.add(b"project_url".to_string(), b"https://suipatron.com".to_string());
+    display::update_version(&mut sub_display);
+    transfer::public_transfer(sub_display, ctx.sender());
+
+    transfer::public_transfer(publisher, ctx.sender());
+}
+
 entry fun subscribe(
     profile: &mut CreatorProfile,
-    payment: Coin<SUI>,
+    payment: &mut Coin<SUI>,
     clock: &Clock,
     ctx: &mut TxContext,
 ) {
@@ -40,7 +56,8 @@ entry fun subscribe(
     let price = creator::price(profile);
     assert!(payment.value() >= price, EInsufficientPayment);
 
-    transfer::public_transfer(payment, creator::owner(profile));
+    let paid = payment.split(price, ctx);
+    transfer::public_transfer(paid, creator::owner(profile));
 
     let now = clock.timestamp_ms();
     let expires = now + 31536000000; // 1 year
@@ -72,25 +89,17 @@ public fun is_subscribed(p: &CreatorProfile, addr: address): bool {
 use sui::{test_scenario as ts, clock, coin};
 
 #[test_only]
-const ADMIN: address = @0xAA;
-#[test_only]
 const CREATOR_ADDR: address = @0xBB;
 #[test_only]
 const SUBSCRIBER: address = @0xCC;
 
 #[test]
 fun test_subscribe() {
-    let mut ts = ts::begin(ADMIN);
+    let mut ts = ts::begin(CREATOR_ADDR);
 
-    suipatron::creator::init_for_testing(ts.ctx());
-
-    ts.next_tx(CREATOR_ADDR);
-
-    let publisher = ts.take_from_address<sui::package::Publisher>(ADMIN);
     let clock = clock::create_for_testing(ts.ctx());
 
     suipatron::creator::register(
-        &publisher,
         b"Creator".to_string(),
         b"Bio".to_string(),
         1000,
@@ -98,16 +107,15 @@ fun test_subscribe() {
         ts.ctx(),
     );
 
-    transfer::public_transfer(publisher, ADMIN);
-
     ts.next_tx(SUBSCRIBER);
 
     let mut profile = ts.take_shared<CreatorProfile>();
-    let payment = coin::mint_for_testing<SUI>(1000, ts.ctx());
+    let mut payment = coin::mint_for_testing<SUI>(1000, ts.ctx());
 
-    subscribe(&mut profile, payment, &clock, ts.ctx());
+    subscribe(&mut profile, &mut payment, &clock, ts.ctx());
 
     ts::return_shared(profile);
+    coin::burn_for_testing(payment);
 
     ts.next_tx(SUBSCRIBER);
 
@@ -119,25 +127,17 @@ fun test_subscribe() {
 
 #[test]
 fun test_is_subscribed() {
-    let mut ts = ts::begin(ADMIN);
+    let mut ts = ts::begin(CREATOR_ADDR);
 
-    suipatron::creator::init_for_testing(ts.ctx());
-
-    ts.next_tx(CREATOR_ADDR);
-
-    let publisher = ts.take_from_address<sui::package::Publisher>(ADMIN);
     let clock = clock::create_for_testing(ts.ctx());
 
     suipatron::creator::register(
-        &publisher,
         b"Creator".to_string(),
         b"Bio".to_string(),
         1000,
         &clock,
         ts.ctx(),
     );
-
-    transfer::public_transfer(publisher, ADMIN);
 
     ts.next_tx(SUBSCRIBER);
 
@@ -149,9 +149,10 @@ fun test_is_subscribed() {
     ts.next_tx(SUBSCRIBER);
 
     let mut profile = ts.take_shared<CreatorProfile>();
-    let payment = coin::mint_for_testing<SUI>(1000, ts.ctx());
-    subscribe(&mut profile, payment, &clock, ts.ctx());
+    let mut payment = coin::mint_for_testing<SUI>(1000, ts.ctx());
+    subscribe(&mut profile, &mut payment, &clock, ts.ctx());
     ts::return_shared(profile);
+    coin::burn_for_testing(payment);
 
     ts.next_tx(SUBSCRIBER);
 
@@ -166,17 +167,11 @@ fun test_is_subscribed() {
 
 #[test, expected_failure(abort_code = EInsufficientPayment)]
 fun test_subscribe_insufficient_payment() {
-    let mut ts = ts::begin(ADMIN);
+    let mut ts = ts::begin(CREATOR_ADDR);
 
-    suipatron::creator::init_for_testing(ts.ctx());
-
-    ts.next_tx(CREATOR_ADDR);
-
-    let publisher = ts.take_from_address<sui::package::Publisher>(ADMIN);
     let clock = clock::create_for_testing(ts.ctx());
 
     suipatron::creator::register(
-        &publisher,
         b"Creator".to_string(),
         b"Bio".to_string(),
         1000,
@@ -184,33 +179,26 @@ fun test_subscribe_insufficient_payment() {
         ts.ctx(),
     );
 
-    transfer::public_transfer(publisher, ADMIN);
-
     ts.next_tx(SUBSCRIBER);
 
     let mut profile = ts.take_shared<CreatorProfile>();
-    let payment = coin::mint_for_testing<SUI>(500, ts.ctx()); // Not enough
+    let mut payment = coin::mint_for_testing<SUI>(500, ts.ctx());
 
-    subscribe(&mut profile, payment, &clock, ts.ctx());
+    subscribe(&mut profile, &mut payment, &clock, ts.ctx());
 
     ts::return_shared(profile);
+    coin::burn_for_testing(payment);
     clock.destroy_for_testing();
     ts.end();
 }
 
 #[test, expected_failure(abort_code = EAlreadySubscribed)]
 fun test_subscribe_twice_fails() {
-    let mut ts = ts::begin(ADMIN);
+    let mut ts = ts::begin(CREATOR_ADDR);
 
-    suipatron::creator::init_for_testing(ts.ctx());
-
-    ts.next_tx(CREATOR_ADDR);
-
-    let publisher = ts.take_from_address<sui::package::Publisher>(ADMIN);
     let clock = clock::create_for_testing(ts.ctx());
 
     suipatron::creator::register(
-        &publisher,
         b"Creator".to_string(),
         b"Bio".to_string(),
         1000,
@@ -218,22 +206,22 @@ fun test_subscribe_twice_fails() {
         ts.ctx(),
     );
 
-    transfer::public_transfer(publisher, ADMIN);
+    ts.next_tx(SUBSCRIBER);
+
+    let mut profile = ts.take_shared<CreatorProfile>();
+    let mut payment1 = coin::mint_for_testing<SUI>(1000, ts.ctx());
+    subscribe(&mut profile, &mut payment1, &clock, ts.ctx());
+    ts::return_shared(profile);
+    coin::burn_for_testing(payment1);
 
     ts.next_tx(SUBSCRIBER);
 
     let mut profile = ts.take_shared<CreatorProfile>();
-    let payment1 = coin::mint_for_testing<SUI>(1000, ts.ctx());
-    subscribe(&mut profile, payment1, &clock, ts.ctx());
-    ts::return_shared(profile);
-
-    ts.next_tx(SUBSCRIBER);
-
-    let mut profile = ts.take_shared<CreatorProfile>();
-    let payment2 = coin::mint_for_testing<SUI>(1000, ts.ctx());
-    subscribe(&mut profile, payment2, &clock, ts.ctx()); // Should fail
+    let mut payment2 = coin::mint_for_testing<SUI>(1000, ts.ctx());
+    subscribe(&mut profile, &mut payment2, &clock, ts.ctx());
 
     ts::return_shared(profile);
+    coin::burn_for_testing(payment2);
     clock.destroy_for_testing();
     ts.end();
 }

@@ -1,19 +1,39 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { getPostById, getCreatorByAddress } from "@/data/mock";
+import { useCreatorPosts, useCreatorByProfileId, useIsSubscribed } from "@/hooks";
 import { BackLink, NotFound } from "@/components/common";
 import { PostAuthor, PostContent } from "@/components/post";
+import { PotatoLoader } from "@/components/ui";
 
 export default function PostViewPage() {
   const params = useParams();
   const postId = params.id as string;
 
-  const post = getPostById(postId);
-  const creator = post ? getCreatorByAddress(post.creatorAddress) : undefined;
+  const [profileId, postIndex] = postId.includes("_")
+    ? postId.split("_")
+    : [postId, "0"];
 
-  // Mock subscription status - will be replaced with real check
-  const isSubscribed = false;
+  const { data: creator, isLoading: isCreatorLoading } = useCreatorByProfileId(profileId);
+  const { data: posts, isLoading: isPostsLoading } = useCreatorPosts(
+    profileId,
+    creator?.address || ""
+  );
+  const { isSubscribed } = useIsSubscribed(profileId);
+
+  const isLoading = isCreatorLoading || isPostsLoading;
+
+  if (isLoading) {
+    return (
+      <div className="page-container py-8">
+        <div className="flex justify-center py-12">
+          <PotatoLoader fullScreen size="lg" text="Loading post..." />
+        </div>
+      </div>
+    );
+  }
+
+  const post = posts?.find((p) => p.id === postIndex || p.id === postId);
 
   if (!post || !creator) {
     return <NotFound title="Post not found" />;
