@@ -5,7 +5,6 @@ use sui::clock::Clock;
 use sui::dynamic_field as df;
 use sui::event;
 use sui::package::{Self, Publisher};
-use suipatron::registry::{Self, Registry};
 
 const ENotOwner: u64 = 0;
 const EWrongPublisher: u64 = 1;
@@ -41,13 +40,18 @@ public struct PostPublished has copy, drop {
     blob_id: String,
 }
 
+public struct CreatorRegistered has copy, drop {
+    profile_id: ID,
+    owner: address,
+    name: String,
+}
+
 fun init(otw: CREATOR, ctx: &mut TxContext) {
     package::claim_and_keep(otw, ctx);
 }
 
 entry fun register(
     publisher: &Publisher,
-    reg: &mut Registry,
     name: String,
     bio: String,
     price: u64,
@@ -65,8 +69,11 @@ entry fun register(
         total_subs: 0,
         created_at: clock.timestamp_ms(),
     };
-    let id = object::id(&profile);
-    registry::add(reg, ctx.sender(), name, id);
+    event::emit(CreatorRegistered {
+        profile_id: object::id(&profile),
+        owner: ctx.sender(),
+        name,
+    });
     transfer::share_object(profile);
 }
 
@@ -120,18 +127,15 @@ const CREATOR_ADDR: address = @0xBB;
 fun test_register_and_publish_post() {
     let mut ts = ts::begin(ADMIN);
 
-    registry::init_for_testing(ts.ctx());
     init_for_testing(ts.ctx());
 
     ts.next_tx(CREATOR_ADDR);
 
-    let mut registry = ts.take_shared<Registry>();
     let publisher = ts.take_from_address<Publisher>(ADMIN);
     let clock = clock::create_for_testing(ts.ctx());
 
     register(
         &publisher,
-        &mut registry,
         b"TestCreator".to_string(),
         b"Bio".to_string(),
         1000,
@@ -139,7 +143,6 @@ fun test_register_and_publish_post() {
         ts.ctx(),
     );
 
-    ts::return_shared(registry);
     transfer::public_transfer(publisher, ADMIN);
 
     ts.next_tx(CREATOR_ADDR);
@@ -169,18 +172,15 @@ fun test_register_and_publish_post() {
 fun test_publish_post_not_owner_fails() {
     let mut ts = ts::begin(ADMIN);
 
-    registry::init_for_testing(ts.ctx());
     init_for_testing(ts.ctx());
 
     ts.next_tx(CREATOR_ADDR);
 
-    let mut registry = ts.take_shared<Registry>();
     let publisher = ts.take_from_address<Publisher>(ADMIN);
     let clock = clock::create_for_testing(ts.ctx());
 
     register(
         &publisher,
-        &mut registry,
         b"TestCreator".to_string(),
         b"Bio".to_string(),
         1000,
@@ -188,7 +188,6 @@ fun test_publish_post_not_owner_fails() {
         ts.ctx(),
     );
 
-    ts::return_shared(registry);
     transfer::public_transfer(publisher, ADMIN);
 
     // Try to post as different user

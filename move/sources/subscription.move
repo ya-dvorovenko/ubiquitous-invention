@@ -66,8 +66,6 @@ public(package) fun expires_at(s: &Subscription): u64 { s.expires_at }
 
 #[test_only]
 use sui::{test_scenario as ts, clock, coin};
-#[test_only]
-use suipatron::registry::Registry;
 
 #[test_only]
 const ADMIN: address = @0xAA;
@@ -80,18 +78,15 @@ const SUBSCRIBER: address = @0xCC;
 fun test_subscribe() {
     let mut ts = ts::begin(ADMIN);
 
-    suipatron::registry::init_for_testing(ts.ctx());
     suipatron::creator::init_for_testing(ts.ctx());
 
     ts.next_tx(CREATOR_ADDR);
 
-    let mut registry = ts.take_shared<Registry>();
     let publisher = ts.take_from_address<sui::package::Publisher>(ADMIN);
     let clock = clock::create_for_testing(ts.ctx());
 
     suipatron::creator::register(
         &publisher,
-        &mut registry,
         b"Creator".to_string(),
         b"Bio".to_string(),
         1000,
@@ -99,7 +94,6 @@ fun test_subscribe() {
         ts.ctx(),
     );
 
-    ts::return_shared(registry);
     transfer::public_transfer(publisher, ADMIN);
 
     ts.next_tx(SUBSCRIBER);
@@ -123,18 +117,15 @@ fun test_subscribe() {
 fun test_subscribe_insufficient_payment() {
     let mut ts = ts::begin(ADMIN);
 
-    suipatron::registry::init_for_testing(ts.ctx());
     suipatron::creator::init_for_testing(ts.ctx());
 
     ts.next_tx(CREATOR_ADDR);
 
-    let mut registry = ts.take_shared<Registry>();
     let publisher = ts.take_from_address<sui::package::Publisher>(ADMIN);
     let clock = clock::create_for_testing(ts.ctx());
 
     suipatron::creator::register(
         &publisher,
-        &mut registry,
         b"Creator".to_string(),
         b"Bio".to_string(),
         1000,
@@ -142,7 +133,6 @@ fun test_subscribe_insufficient_payment() {
         ts.ctx(),
     );
 
-    ts::return_shared(registry);
     transfer::public_transfer(publisher, ADMIN);
 
     ts.next_tx(SUBSCRIBER);
@@ -161,18 +151,15 @@ fun test_subscribe_insufficient_payment() {
 fun test_subscribe_twice_fails() {
     let mut ts = ts::begin(ADMIN);
 
-    suipatron::registry::init_for_testing(ts.ctx());
     suipatron::creator::init_for_testing(ts.ctx());
 
     ts.next_tx(CREATOR_ADDR);
 
-    let mut registry = ts.take_shared<Registry>();
     let publisher = ts.take_from_address<sui::package::Publisher>(ADMIN);
     let clock = clock::create_for_testing(ts.ctx());
 
     suipatron::creator::register(
         &publisher,
-        &mut registry,
         b"Creator".to_string(),
         b"Bio".to_string(),
         1000,
@@ -180,7 +167,6 @@ fun test_subscribe_twice_fails() {
         ts.ctx(),
     );
 
-    ts::return_shared(registry);
     transfer::public_transfer(publisher, ADMIN);
 
     ts.next_tx(SUBSCRIBER);
