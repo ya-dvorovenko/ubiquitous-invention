@@ -1,6 +1,10 @@
 "use client";
 
-import { SuiClientProvider, WalletProvider, useSuiClient } from "@mysten/dapp-kit";
+import {
+  SuiClientProvider,
+  WalletProvider,
+  useSuiClient,
+} from "@mysten/dapp-kit";
 import { ClientWithCoreApi } from "@mysten/sui/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactNode, useState, useEffect } from "react";
@@ -8,8 +12,12 @@ import { registerEnokiWallets } from "@mysten/enoki";
 
 import "@mysten/dapp-kit/dist/index.css";
 
-const SUI_NETWORK = (process.env.NEXT_PUBLIC_SUI_NETWORK || "testnet") as "testnet" | "mainnet" | "devnet";
-const SUI_RPC_URL = process.env.NEXT_PUBLIC_SUI_RPC_URL || "https://fullnode.testnet.sui.io:443";
+const SUI_NETWORK = (process.env.NEXT_PUBLIC_SUI_NETWORK || "testnet") as
+  | "testnet"
+  | "mainnet"
+  | "devnet";
+const SUI_RPC_URL =
+  process.env.NEXT_PUBLIC_SUI_RPC_URL || "https://fullnode.testnet.sui.io:443";
 
 const networks = {
   [SUI_NETWORK]: { url: SUI_RPC_URL, network: SUI_NETWORK },
