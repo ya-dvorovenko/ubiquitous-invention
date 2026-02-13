@@ -7,6 +7,13 @@ export function formatBalance(balance: string): string {
   return sui.toFixed(2);
 }
 
+export function formatSui(mist: number): string {
+  const sui = mist / 1_000_000_000;
+  if (sui >= 1) return sui.toFixed(2);
+  if (sui >= 0.01) return sui.toFixed(2);
+  return sui.toFixed(4);
+}
+
 export function formatDate(dateString: string): string {
   return new Date(dateString).toLocaleDateString("en-US", {
     year: "numeric",

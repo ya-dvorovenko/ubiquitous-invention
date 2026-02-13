@@ -2,7 +2,7 @@
 
 import { Creator } from "@/types";
 import { Avatar, Badge, Button } from "../ui";
-import { formatAddress } from "@/utils/format";
+import { formatAddress, formatSui } from "@/utils/format";
 
 interface CreatorHeaderProps {
   creator: Creator;
@@ -49,7 +49,7 @@ export function CreatorHeader({
               <Badge variant="success">Subscribed</Badge>
             ) : (
               <Button onClick={onSubscribe}>
-                Subscribe ({creator.subscriptionPrice} SUI)
+                Subscribe ({formatSui(creator.subscriptionPrice)} SUI)
               </Button>
             )}
           </div>

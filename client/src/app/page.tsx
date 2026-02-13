@@ -3,29 +3,31 @@
 import { useState, useMemo, useEffect } from "react";
 import { SearchBar } from "@/components/common";
 import { CreatorList } from "@/components/creator";
-import { MOCK_CREATORS } from "@/data/mock";
-import { useSuiNS } from "@/hooks";
+import { useCreators, useSuiNS } from "@/hooks";
+import { PotatoLoader } from "@/components/ui";
 
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [resolvedAddress, setResolvedAddress] = useState<string | null>(null);
   const [isResolvingSuiNS, setIsResolvingSuiNS] = useState(false);
   const { resolveNameToAddress } = useSuiNS();
+  const { data: creators, isLoading, error } = useCreators();
 
   // Local search - always runs first
   const localResults = useMemo(() => {
-    if (!searchQuery.trim()) return MOCK_CREATORS;
+    if (!creators) return [];
+    if (!searchQuery.trim()) return creators;
 
     const query = searchQuery.toLowerCase();
 
-    return MOCK_CREATORS.filter(
+    return creators.filter(
       (creator) =>
         creator.name.toLowerCase().includes(query) ||
         creator.address.toLowerCase().includes(query) ||
         creator.suinsName?.toLowerCase().includes(query) ||
         creator.bio.toLowerCase().includes(query)
     );
-  }, [searchQuery]);
+  }, [searchQuery, creators]);
 
   // Only resolve SuiNS if no local results found
   useEffect(() => {
@@ -51,13 +53,32 @@ export default function Home() {
 
   // Final results: prefer SuiNS resolved, fallback to local
   const filteredCreators = useMemo(() => {
+    if (!creators) return [];
     if (resolvedAddress) {
-      return MOCK_CREATORS.filter(
+      return creators.filter(
         (creator) => creator.address.toLowerCase() === resolvedAddress.toLowerCase()
       );
     }
     return localResults;
-  }, [resolvedAddress, localResults]);
+  }, [resolvedAddress, localResults, creators]);
+
+  if (isLoading) {
+    return (
+      <div className="page-container py-8 flex justify-center">
+        <PotatoLoader />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="page-container py-8 text-center">
+        <p style={{ color: "var(--text-secondary)" }}>
+          Failed to load creators. Please try again.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="page-container py-8">
