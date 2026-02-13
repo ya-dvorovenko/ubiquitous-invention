@@ -31,7 +31,10 @@ export function useSubscribe() {
 
     const result = await signAndExecute({ transaction: tx });
 
-    await suiClient.waitForTransaction({ digest: result.digest });
+    await suiClient.waitForTransaction({
+      digest: result.digest,
+      options: { showEffects: true },
+    });
 
     queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
     queryClient.invalidateQueries({ queryKey: ["creators"] });

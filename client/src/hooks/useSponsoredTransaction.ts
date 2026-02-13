@@ -34,7 +34,10 @@ export function useSponsoredTransaction() {
         signature,
       });
 
-      await suiClient.waitForTransaction({ digest: result.digest });
+      await suiClient.waitForTransaction({
+        digest: result.digest,
+        options: { showEffects: true },
+      });
 
       return result;
     } finally {

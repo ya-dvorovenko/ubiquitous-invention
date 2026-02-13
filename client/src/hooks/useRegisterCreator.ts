@@ -30,8 +30,8 @@ export function useRegisterCreator() {
 
     const result = await sponsorAndExecute(tx);
 
-    queryClient.invalidateQueries({ queryKey: ["creators"] });
-    queryClient.invalidateQueries({ queryKey: ["isCreator"] });
+    queryClient.removeQueries({ queryKey: ["creators"] });
+    await queryClient.refetchQueries({ queryKey: ["creators"] });
 
     return result;
   };

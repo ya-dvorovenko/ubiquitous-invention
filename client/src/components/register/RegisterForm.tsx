@@ -2,18 +2,22 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useRegisterCreator } from "@/hooks";
+import { useQueryClient } from "@tanstack/react-query";
+import { useRegisterCreator, useCreators } from "@/hooks";
 import { Button, Card, useToast } from "@/components/ui";
 
 export function RegisterForm() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { register, isPending } = useRegisterCreator();
+  const { data: creators } = useCreators();
   const { showToast } = useToast();
 
   const [name, setName] = useState("");
   const [bio, setBio] = useState("");
-  const [price, setPrice] = useState("0.1");
+  const [price, setPrice] = useState("");
   const [error, setError] = useState("");
+  const [isSuccess, setIsSuccess] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,6 +25,14 @@ export function RegisterForm() {
 
     if (!name.trim()) {
       setError("Name is required");
+      return;
+    }
+
+    const nameExists = creators?.some(
+      (c) => c.name.toLowerCase() === name.trim().toLowerCase()
+    );
+    if (nameExists) {
+      setError("This name is already taken");
       return;
     }
 
@@ -45,12 +57,40 @@ export function RegisterForm() {
       });
 
       showToast("You're now a creator!", "success");
-      router.push("/dashboard");
+      setIsSuccess(true);
     } catch (err) {
       showToast(err instanceof Error ? err.message : "Registration failed", "error");
       setError(err instanceof Error ? err.message : "Registration failed");
     }
   };
+
+  if (isSuccess) {
+    return (
+      <Card>
+        <div className="p-6 text-center space-y-4">
+          <div className="text-4xl">🎉</div>
+          <h2
+            className="text-xl font-bold"
+            style={{ color: "var(--text-primary)" }}
+          >
+            You&apos;re now a creator!
+          </h2>
+          <p style={{ color: "var(--text-secondary)" }}>
+            Your profile has been created. You can now start sharing content with your subscribers.
+          </p>
+          <Button
+            onClick={async () => {
+              await queryClient.refetchQueries({ queryKey: ["creators"] });
+              router.push("/");
+            }}
+            className="w-full"
+          >
+            Browse Creators
+          </Button>
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <Card>
