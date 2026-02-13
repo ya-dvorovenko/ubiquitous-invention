@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Creator } from "@/types";
 import { Avatar, Badge } from "../ui";
-import { formatAddress } from "@/utils/format";
+import { formatAddress, formatSui } from "@/utils/format";
 
 interface CreatorCardProps {
   creator: Creator;
@@ -53,7 +53,7 @@ export function CreatorCard({ creator }: CreatorCardProps) {
           >
             {creator.subscriberCount} subscribers
           </span>
-          <Badge variant="price">{creator.subscriptionPrice} SUI</Badge>
+          <Badge variant="price">{formatSui(creator.subscriptionPrice)} SUI</Badge>
         </div>
       </div>
     </Link>

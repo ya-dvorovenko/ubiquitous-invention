@@ -5,6 +5,7 @@ export interface Creator {
   bio: string;
   subscriberCount: number;
   subscriptionPrice: number;
+  profileId?: string; // On-chain CreatorProfile object ID
 }
 
 export interface PostMedia {
@@ -23,10 +24,13 @@ export interface Post {
   media?: PostMedia[]; // Exclusive media for subscribers
   createdAt: string;
   blobId?: string; // Walrus blob ID for encrypted content
+  encrypted?: boolean;
 }
 
 export interface Subscription {
+  id: string; // On-chain Subscription object ID
+  profileId: string; // CreatorProfile ID
   subscriberAddress: string;
-  creatorAddress: string;
   expiresAt: string;
+  createdAt?: string;
 }
