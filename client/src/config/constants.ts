@@ -13,6 +13,7 @@ export const TARGETS = {
   publishPost: `${PACKAGE_ID}::creator::publish_post`,
   subscribe: `${PACKAGE_ID}::subscription::subscribe`,
   assertAccess: `${PACKAGE_ID}::seal_mock::assert_access`,
+  sealApprove: `${PACKAGE_ID}::seal_mock::seal_approve`,
 } as const;
 
 export const SUBSCRIPTION_DURATION_MS = 31536000000;
