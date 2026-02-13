@@ -8,6 +8,7 @@ interface CreatorHeaderProps {
   creator: Creator;
   postsCount: number;
   isSubscribed: boolean;
+  isSubscribing?: boolean;
   onSubscribe?: () => void;
 }
 
@@ -15,6 +16,7 @@ export function CreatorHeader({
   creator,
   postsCount,
   isSubscribed,
+  isSubscribing,
   onSubscribe,
 }: CreatorHeaderProps) {
   return (
@@ -48,8 +50,10 @@ export function CreatorHeader({
             {isSubscribed ? (
               <Badge variant="success">Subscribed</Badge>
             ) : (
-              <Button onClick={onSubscribe}>
-                Subscribe ({formatSui(creator.subscriptionPrice)} SUI)
+              <Button onClick={onSubscribe} disabled={isSubscribing}>
+                {isSubscribing
+                  ? "Subscribing..."
+                  : `Subscribe (${formatSui(creator.subscriptionPrice)} SUI)`}
               </Button>
             )}
           </div>
