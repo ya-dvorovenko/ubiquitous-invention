@@ -2,13 +2,15 @@
 
 import { Creator } from "@/types";
 import { Badge, Button, Card } from "../ui";
+import { formatSui } from "@/utils/format";
 
 interface PaywallProps {
   creator: Creator;
+  isSubscribing?: boolean;
   onSubscribe?: () => void;
 }
 
-export function Paywall({ creator, onSubscribe }: PaywallProps) {
+export function Paywall({ creator, isSubscribing, onSubscribe }: PaywallProps) {
   return (
     <Card className="text-center">
       <div
@@ -39,8 +41,10 @@ export function Paywall({ creator, onSubscribe }: PaywallProps) {
         Get access to this post and all exclusive content from {creator.name}
       </p>
       <div className="flex items-center justify-center gap-4">
-        <Button onClick={onSubscribe}>
-          Subscribe ({creator.subscriptionPrice} SUI)
+        <Button onClick={onSubscribe} disabled={isSubscribing}>
+          {isSubscribing
+            ? "Subscribing..."
+            : `Subscribe (${formatSui(creator.subscriptionPrice)} SUI)`}
         </Button>
         <Badge variant="price">{creator.subscriberCount} subscribers</Badge>
       </div>

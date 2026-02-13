@@ -1,21 +1,21 @@
 "use client";
 
-import { Transaction } from "@mysten/sui/transactions";
 import { useQueryClient } from "@tanstack/react-query";
 import { TARGETS, CLOCK_ID } from "@/config/constants";
 import { useSponsoredTransaction } from "./useSponsoredTransaction";
+import { Transaction } from "@mysten/sui/transactions";
 
-interface RegisterCreatorParams {
+interface RegisterParams {
   name: string;
   bio: string;
-  price: number; // subscription price in MIST
+  price: number;
 }
 
 export function useRegisterCreator() {
   const queryClient = useQueryClient();
   const { sponsorAndExecute, isPending } = useSponsoredTransaction();
 
-  const register = async ({ name, bio, price }: RegisterCreatorParams) => {
+  const register = async ({ name, bio, price }: RegisterParams) => {
     const tx = new Transaction();
 
     tx.moveCall({
@@ -36,8 +36,5 @@ export function useRegisterCreator() {
     return result;
   };
 
-  return {
-    register,
-    isPending,
-  };
+  return { register, isPending };
 }

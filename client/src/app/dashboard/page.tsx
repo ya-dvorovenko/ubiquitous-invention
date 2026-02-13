@@ -1,16 +1,20 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useCurrentAccount } from "@mysten/dapp-kit";
+import { useIsCreator, useCreatorPosts } from "@/hooks";
 import { CreatePostForm } from "@/components/dashboard";
 import { PostList } from "@/components/post";
-import { getPostsByCreator } from "@/data/mock";
+import { PotatoLoader } from "@/components/ui";
 
 export default function DashboardPage() {
+  const router = useRouter();
   const currentAccount = useCurrentAccount();
-
-  const creatorPosts = currentAccount
-    ? getPostsByCreator(currentAccount.address)
-    : [];
+  const { isCreator, creatorProfile, isLoading: isCreatorLoading } = useIsCreator();
+  const { data: posts, isLoading: isPostsLoading } = useCreatorPosts(
+    creatorProfile?.profileId || "",
+    creatorProfile?.address || ""
+  );
 
   const handlePublish = async () => {
     // TODO: Implement actual publish logic
@@ -41,6 +45,21 @@ export default function DashboardPage() {
     );
   }
 
+  if (isCreatorLoading) {
+    return (
+      <div className="page-container py-8">
+        <div className="flex justify-center py-12">
+          <PotatoLoader size="lg" text="Loading..." />
+        </div>
+      </div>
+    );
+  }
+
+  if (!isCreator) {
+    router.push("/register");
+    return null;
+  }
+
   return (
     <div className="page-container py-8">
       <h1
@@ -66,12 +85,18 @@ export default function DashboardPage() {
             className="text-xl font-bold mb-4"
             style={{ color: "var(--text-primary)" }}
           >
-            Your Posts
+            Your Posts ({posts?.length || 0})
           </h2>
-          <PostList
-            posts={creatorPosts}
-            emptyMessage="You haven't published any posts yet"
-          />
+          {isPostsLoading ? (
+            <div className="flex justify-center py-8">
+              <PotatoLoader text="Loading posts..." />
+            </div>
+          ) : (
+            <PostList
+              posts={posts || []}
+              emptyMessage="You haven't published any posts yet"
+            />
+          )}
         </div>
       </div>
     </div>

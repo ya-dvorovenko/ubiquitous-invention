@@ -1,15 +1,22 @@
 "use client";
 
 import { useParams } from "next/navigation";
+import { useCurrentAccount } from "@mysten/dapp-kit";
 import { BackLink, NotFound } from "@/components/common";
 import { CreatorHeader } from "@/components/creator";
 import { PostList } from "@/components/post";
 import { PotatoLoader } from "@/components/ui";
-import { useCreatorByAddress, useCreatorPosts, useIsSubscribed } from "@/hooks";
+import {
+  useCreatorByAddress,
+  useCreatorPosts,
+  useIsSubscribed,
+  useSubscribe,
+} from "@/hooks";
 
 export default function CreatorProfilePage() {
   const params = useParams();
   const address = params.address as string;
+  const currentAccount = useCurrentAccount();
 
   const { data: creator, isLoading: isLoadingCreator } = useCreatorByAddress(address);
   const { data: posts, isLoading: isLoadingPosts } = useCreatorPosts(
@@ -17,6 +24,21 @@ export default function CreatorProfilePage() {
     address
   );
   const { isSubscribed } = useIsSubscribed(creator?.profileId || "");
+  const { subscribe, isPending: isSubscribing } = useSubscribe();
+
+  const handleSubscribe = async () => {
+    if (!creator?.profileId || !currentAccount) return;
+
+    try {
+      await subscribe({
+        profileId: creator.profileId,
+        price: creator.subscriptionPrice,
+      });
+    } catch (error) {
+      console.error("Subscribe failed:", error);
+      alert(error instanceof Error ? error.message : "Subscribe failed");
+    }
+  };
 
   if (isLoadingCreator) {
     return (
@@ -38,6 +60,8 @@ export default function CreatorProfilePage() {
         creator={creator}
         postsCount={posts?.length || 0}
         isSubscribed={isSubscribed}
+        isSubscribing={isSubscribing}
+        onSubscribe={handleSubscribe}
       />
 
       <h2

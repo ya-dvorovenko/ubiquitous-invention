@@ -2,12 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useIsCreator } from "@/hooks";
 import { WalletConnect } from "./WalletConnect";
-
-const navLinks = [
-  { href: "/", label: "Creators" },
-  { href: "/dashboard", label: "Dashboard" },
-];
 
 function NavLink({ href, children }: { href: string; children: React.ReactNode }) {
   return (
@@ -27,6 +23,8 @@ function NavLink({ href, children }: { href: string; children: React.ReactNode }
 }
 
 export function Header() {
+  const { isCreator } = useIsCreator();
+
   return (
     <header
       className="page-container fixed top-0 left-0 right-0 z-50 flex items-center justify-between border-b"
@@ -46,11 +44,13 @@ export function Header() {
         </Link>
 
         <nav className="hidden md:flex items-center gap-6">
-          {navLinks.map((link) => (
-            <NavLink key={link.href} href={link.href}>
-              {link.label}
-            </NavLink>
-          ))}
+          <NavLink href="/">Creators</NavLink>
+          <NavLink href="/subscriptions">My Subscriptions</NavLink>
+          {isCreator ? (
+            <NavLink href="/dashboard">Dashboard</NavLink>
+          ) : (
+            <NavLink href="/register">Become Creator</NavLink>
+          )}
         </nav>
       </div>
 
