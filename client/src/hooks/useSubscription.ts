@@ -3,7 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useCurrentAccount } from "@mysten/dapp-kit";
 import { graphqlQuery } from "@/lib/graphql/client";
-import { USER_SUBSCRIPTIONS_QUERY } from "@/lib/graphql/queries";
+import { USER_SUBSCRIPTIONS_QUERY, CREATOR_PROFILE_QUERY } from "@/lib/graphql/queries";
 import { Subscription } from "@/types";
 
 interface SubscriptionData {
@@ -32,38 +32,92 @@ interface SubscriptionsResponse {
   };
 }
 
+interface CreatorProfileResponse {
+  object: {
+    asMoveObject: {
+      contents: {
+        json: {
+          name: string;
+          owner: string;
+        };
+      };
+    };
+  } | null;
+}
+
+async function fetchCreatorInfo(
+  profileId: string
+): Promise<{ name: string; address: string } | null> {
+  try {
+    const data = await graphqlQuery<CreatorProfileResponse>(CREATOR_PROFILE_QUERY, {
+      id: profileId,
+    });
+    if (data.object?.asMoveObject?.contents?.json) {
+      return {
+        name: data.object.asMoveObject.contents.json.name,
+        address: data.object.asMoveObject.contents.json.owner,
+      };
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 async function fetchUserSubscriptions(
   ownerAddress: string
 ): Promise<Subscription[]> {
-  const subscriptions: Subscription[] = [];
+  const rawSubscriptions: Array<{
+    id: string;
+    profileId: string;
+    subscriberAddress: string;
+    expiresAt: string;
+    createdAt: string;
+  }> = [];
   let cursor: string | null = null;
   let hasNextPage = true;
 
-  while (hasNextPage) {
-    const data: SubscriptionsResponse = await graphqlQuery<SubscriptionsResponse>(
-      USER_SUBSCRIPTIONS_QUERY,
-      {
-        owner: ownerAddress,
-        after: cursor,
-      }
-    );
+  try {
+    while (hasNextPage) {
+      const data: SubscriptionsResponse = await graphqlQuery<SubscriptionsResponse>(
+        USER_SUBSCRIPTIONS_QUERY,
+        {
+          owner: ownerAddress,
+          after: cursor,
+        }
+      );
 
-    for (const node of data.objects.nodes as SubscriptionNode[]) {
-      const sub = node.asMoveObject.contents.json;
-      subscriptions.push({
-        id: node.address,
-        profileId: sub.profile_id,
-        subscriberAddress: ownerAddress,
-        expiresAt: new Date(parseInt(sub.expires_at, 10)).toISOString(),
-        createdAt: new Date(parseInt(sub.created_at, 10)).toISOString(),
-      });
+      for (const node of data.objects.nodes as SubscriptionNode[]) {
+        const sub = node.asMoveObject.contents.json;
+        rawSubscriptions.push({
+          id: node.address,
+          profileId: sub.profile_id,
+          subscriberAddress: ownerAddress,
+          expiresAt: new Date(parseInt(sub.expires_at, 10)).toISOString(),
+          createdAt: new Date(parseInt(sub.created_at, 10)).toISOString(),
+        });
+      }
+
+      hasNextPage = data.objects.pageInfo.hasNextPage;
+      cursor = data.objects.pageInfo.endCursor;
     }
 
-    hasNextPage = data.objects.pageInfo.hasNextPage;
-    cursor = data.objects.pageInfo.endCursor;
-  }
+    // Enrich subscriptions with creator info
+    const subscriptions = await Promise.all(
+      rawSubscriptions.map(async (sub) => {
+        const creatorInfo = await fetchCreatorInfo(sub.profileId);
+        return {
+          ...sub,
+          creatorName: creatorInfo?.name,
+          creatorAddress: creatorInfo?.address,
+        };
+      })
+    );
 
-  return subscriptions;
+    return subscriptions;
+  } catch (error) {
+    throw error;
+  }
 }
 
 export function useUserSubscriptions() {

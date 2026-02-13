@@ -58,7 +58,9 @@ async function fetchCreatorProfile(profileId: string): Promise<Creator | null> {
       id: profileId,
     });
 
-    if (!data.object?.asMoveObject) return null;
+    if (!data.object?.asMoveObject) {
+      return null;
+    }
 
     const profile = data.object.asMoveObject.contents.json;
     return {
@@ -79,25 +81,29 @@ async function fetchAllCreators(): Promise<Creator[]> {
   let cursor: string | null = null;
   let hasNextPage = true;
 
-  while (hasNextPage) {
-    const data: EventsResponse = await graphqlQuery<EventsResponse>(
-      CREATOR_REGISTERED_EVENTS_QUERY,
-      { after: cursor }
-    );
+  try {
+    while (hasNextPage) {
+      const data: EventsResponse = await graphqlQuery<EventsResponse>(
+        CREATOR_REGISTERED_EVENTS_QUERY,
+        { after: cursor }
+      );
 
-    const profileIds = data.events.nodes.map((node: EventNode) => node.contents.json.profile_id);
+      const profileIds = data.events.nodes.map((node: EventNode) => node.contents.json.profile_id);
 
-    const profiles = await Promise.all(
-      profileIds.map((id: string) => fetchCreatorProfile(id))
-    );
+      const profiles = await Promise.all(
+        profileIds.map((id: string) => fetchCreatorProfile(id))
+      );
 
-    creators.push(...profiles.filter((p): p is Creator => p !== null));
+      creators.push(...profiles.filter((p): p is Creator => p !== null));
 
-    hasNextPage = data.events.pageInfo.hasNextPage;
-    cursor = data.events.pageInfo.endCursor;
+      hasNextPage = data.events.pageInfo.hasNextPage;
+      cursor = data.events.pageInfo.endCursor;
+    }
+
+    return creators;
+  } catch (error) {
+    throw error;
   }
-
-  return creators;
 }
 
 export function useCreators() {

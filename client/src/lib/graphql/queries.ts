@@ -63,7 +63,6 @@ export const CREATOR_POSTS_QUERY = `
   }
 `;
 
-// Query for user's Subscription objects
 export const USER_SUBSCRIPTIONS_QUERY = `
   query GetUserSubscriptions($owner: SuiAddress!, $after: String) {
     objects(

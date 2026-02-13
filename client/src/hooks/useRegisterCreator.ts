@@ -1,7 +1,8 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { TARGETS, CLOCK_ID } from "@/config/constants";
+import { useCurrentAccount, useSuiClient } from "@mysten/dapp-kit";
+import { TARGETS, CLOCK_ID, TYPES } from "@/config/constants";
 import { useSponsoredTransaction } from "./useSponsoredTransaction";
 import { Transaction } from "@mysten/sui/transactions";
 
@@ -13,9 +14,25 @@ interface RegisterParams {
 
 export function useRegisterCreator() {
   const queryClient = useQueryClient();
+  const suiClient = useSuiClient();
+  const currentAccount = useCurrentAccount();
   const { sponsorAndExecute, isPending } = useSponsoredTransaction();
 
   const register = async ({ name, bio, price }: RegisterParams) => {
+    if (!currentAccount) {
+      throw new Error("Wallet not connected");
+    }
+
+    const existingCaps = await suiClient.getOwnedObjects({
+      owner: currentAccount.address,
+      filter: { StructType: TYPES.creatorCap },
+      limit: 1,
+    });
+
+    if (existingCaps.data.length > 0) {
+      throw new Error("You are already registered as a creator");
+    }
+
     const tx = new Transaction();
 
     tx.moveCall({

@@ -28,9 +28,11 @@ export interface Post {
 }
 
 export interface Subscription {
-  id: string; // On-chain Subscription object ID
-  profileId: string; // CreatorProfile ID
+  id: string;
+  profileId: string;
   subscriberAddress: string;
   expiresAt: string;
   createdAt?: string;
+  creatorName?: string;
+  creatorAddress?: string;
 }
