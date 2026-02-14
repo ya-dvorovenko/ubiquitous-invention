@@ -6,10 +6,11 @@ import {
   useCreatorPosts,
   useCreatorByProfileId,
   useIsSubscribed,
+  useSubscribe,
 } from "@/hooks";
 import { BackLink, NotFound } from "@/components/common";
 import { PostAuthor, PostContent } from "@/components/post";
-import { PotatoLoader } from "@/components/ui";
+import { PotatoLoader, useToast } from "@/components/ui";
 
 export default function PostViewPage() {
   const params = useParams();
@@ -28,12 +29,33 @@ export default function PostViewPage() {
   );
 
   const { subscription, isSubscribed } = useIsSubscribed(profileId);
-
+  const { subscribe, isPending: isSubscribing } = useSubscribe();
   const isOwnPost = currentAccount?.address === creator?.address;
 
   const isLoading = isCreatorLoading || isPostsLoading;
 
-  if (isLoading) {
+  const { showToast } = useToast();
+  const isOwnProfile = currentAccount?.address === creator?.address;
+
+  const handleSubscribe = async () => {
+    if (!creator?.profileId || !currentAccount || isOwnProfile) return;
+
+    try {
+      await subscribe({
+        profileId: creator.profileId,
+        price: creator.subscriptionPrice,
+      });
+      showToast(`Subscribed to ${creator.name}!`, "success");
+    } catch (error) {
+      console.error("Subscribe failed:", error);
+      showToast(
+        error instanceof Error ? error.message : "Subscribe failed",
+        "error",
+      );
+    }
+  };
+
+  if (isLoading || isSubscribing) {
     return (
       <div className="page-container py-8">
         <div className="flex justify-center py-12">
@@ -70,6 +92,7 @@ export default function PostViewPage() {
           creator={creator}
           isSubscribed={isSubscribed || isOwnPost}
           subscription={subscription}
+          onSubscribe={isOwnPost ? undefined : handleSubscribe}
         />
       </article>
     </div>

@@ -2,10 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  useCurrentAccount,
-  useSuiClient,
-} from "@mysten/dapp-kit";
+import { useCurrentAccount, useSuiClient } from "@mysten/dapp-kit";
 import { useIsCreator, useCreatorPosts, usePublishPost } from "@/hooks";
 import { SealClient } from "@mysten/seal";
 import { CreatePostForm } from "@/components/dashboard";
@@ -14,6 +11,7 @@ import { PotatoLoader, useToast } from "@/components/ui";
 import { ClientWithCoreApi } from "@mysten/sui/client";
 import { PACKAGE_ID, sealObjectIds } from "@/config/constants";
 import { uploadFilesHttp, uploadBlobHttp } from "@/sdk/walrus-http";
+import { fromHex, toHex } from "@mysten/sui/utils";
 
 interface MediaFile {
   file: File;
@@ -72,17 +70,21 @@ export default function DashboardPage() {
         throw new Error("Title, preview and content are required");
       }
 
-      let listOfMediaBlobIds: { blobId: string; type: "image" | "video" }[] = [];
-
+      let listOfMediaBlobIds: { blobId: string; type: "image" | "video" }[] =
+        [];
       if (mediaFiles.length > 0) {
-        const formatedMediaFiles = mediaFiles.map((mediaFile) => mediaFile.file);
+        const formatedMediaFiles = mediaFiles.map(
+          (mediaFile) => mediaFile.file,
+        );
 
         const files = await uploadFilesHttp(formatedMediaFiles);
 
-        listOfMediaBlobIds = files.map((file: { blobId: string }, index: number) => ({
-          blobId: file.blobId,
-          type: mediaFiles[index].type,
-        }));
+        listOfMediaBlobIds = files.map(
+          (file: { blobId: string }, index: number) => ({
+            blobId: file.blobId,
+            type: mediaFiles[index].type,
+          }),
+        );
       }
 
       // 2. Encrypt content + media references with Seal
@@ -109,16 +111,23 @@ export default function DashboardPage() {
         ),
       );
 
+      const profileIdBytes = fromHex(creatorProfile.profileId!);
+      const nonce = new Uint8Array(8).fill(0); // Фиксированный nonce
+      const idBytes = new Uint8Array([...profileIdBytes, ...nonce]);
+      const idHex = toHex(idBytes);
+
       const encryptedContent = await sealClient.encrypt({
         data: dataToEncrypt,
         threshold: 2,
         packageId: PACKAGE_ID,
-        id: "123", // todo: change it in the future, for now it's just a placeholder
+        id: idHex,
       });
 
       // 3. Upload encrypted blob to Walrus
 
-      const encryptedBlobId = await uploadBlobHttp(encryptedContent.encryptedObject);
+      const encryptedBlobId = await uploadBlobHttp(
+        encryptedContent.encryptedObject,
+      );
 
       // 4. Call publish_post() on smart contract
 
@@ -197,7 +206,10 @@ export default function DashboardPage() {
 
   if (isPublishing) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center z-50" style={{ backgroundColor: "rgba(0, 0, 0, 0.8)" }}>
+      <div
+        className="fixed inset-0 flex items-center justify-center z-50"
+        style={{ backgroundColor: "rgba(0, 0, 0, 0.8)" }}
+      >
         <PotatoLoader size="lg" text="Publishing post..." />
       </div>
     );
