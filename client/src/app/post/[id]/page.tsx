@@ -43,7 +43,8 @@ export default function PostViewPage() {
     try {
       await subscribe({
         profileId: creator.profileId,
-        price: creator.subscriptionPrice,
+        price: creator.tiers[0].price,
+        tierIndex: 0,
       });
       showToast(`Subscribed to ${creator.name}!`, "success");
     } catch (error) {
