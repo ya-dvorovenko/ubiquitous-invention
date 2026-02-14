@@ -66,30 +66,30 @@ export default function DashboardPage() {
       }
 
       if (mediaFiles.length > 5) {
-        throw new Error("Too much files you uploaded");
-      }
-
-      if (mediaFiles.length == 0) {
-        throw new Error("No media files inside your post");
+        throw new Error("Too many files uploaded");
       }
 
       if (!title || !preview || !content) {
         throw new Error("Title, preview and content are required");
       }
 
-      const formatedMediaFiles = mediaFiles.map((mediaFile) => mediaFile.file);
+      let listOfMediaBlobIds: { blobId: string; type: "image" | "video" }[] = [];
 
-      const files = await uploadFiles(
-        formatedMediaFiles,
-        suiClient,
-        currentAccount,
-        signAndExecuteTransaction,
-      );
+      if (mediaFiles.length > 0) {
+        const formatedMediaFiles = mediaFiles.map((mediaFile) => mediaFile.file);
 
-      const listOfMediaBlobIds = files.map((file, index) => ({
-        blobId: file.blobId,
-        type: mediaFiles[index].type,
-      }));
+        const files = await uploadFiles(
+          formatedMediaFiles,
+          suiClient,
+          currentAccount,
+          signAndExecuteTransaction,
+        );
+
+        listOfMediaBlobIds = files.map((file, index) => ({
+          blobId: file.blobId,
+          type: mediaFiles[index].type,
+        }));
+      }
 
       // 2. Encrypt content + media references with Seal
 
