@@ -68,6 +68,7 @@ public struct TierAdded has copy, drop {
     price: u64,
 }
 
+/// Note: Display is not yet supported by GraphQL API.
 fun init(otw: CREATOR, ctx: &mut TxContext) {
     let publisher = package::claim(otw, ctx);
 
