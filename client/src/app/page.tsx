@@ -61,7 +61,7 @@ export default function Home() {
   if (isLoading) {
     return (
       <div className="page-container py-8 flex justify-center">
-        <PotatoLoader />
+        <PotatoLoader fullScreen size="lg" text="Loading..." />
       </div>
     );
   }
