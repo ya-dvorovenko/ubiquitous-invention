@@ -12,10 +12,15 @@ import {
 } from "@/hooks";
 import { BackLink, NotFound } from "@/components/common";
 import { PostAuthor, PostContent } from "@/components/post";
-import { PotatoLoader } from "@/components/ui";
-import { PACKAGE_ID, sealObjectIds, TARGETS } from "@/config/constants";
+import { PotatoLoader, useToast } from "@/components/ui";
+import {
+  CLOCK_ID,
+  PACKAGE_ID,
+  sealObjectIds,
+  TARGETS,
+} from "@/config/constants";
 import { Transaction } from "@mysten/sui/transactions";
-import { WalrusClient } from "@mysten/walrus";
+import { readFile } from "@/sdk/walrus";
 
 export default function PostViewPage() {
   const params = useParams();
@@ -32,7 +37,8 @@ export default function PostViewPage() {
     profileId,
     creator?.address || "",
   );
-  const { isSubscribed } = useIsSubscribed(profileId);
+
+  const { subscription, isSubscribed } = useIsSubscribed(profileId);
 
   const isOwnPost = currentAccount?.address === creator?.address;
 
@@ -42,73 +48,123 @@ export default function PostViewPage() {
 
   const { mutateAsync: signPersonalMessage } = useSignPersonalMessage();
 
+  const { showToast } = useToast();
+
   const handleSignMessage = async () => {
-    if (!creator?.address) return;
+    try {
+      if (!creator?.address) {
+        throw new Error("No creator address");
+      }
 
-    const sessionKey = await SessionKey.create({
-      address: creator?.address,
-      packageId: PACKAGE_ID,
-      ttlMin: 10,
-      suiClient,
-    });
+      const sessionKey = await SessionKey.create({
+        address: creator?.address,
+        packageId: PACKAGE_ID,
+        ttlMin: 10,
+        suiClient,
+      });
 
-    if (!sessionKey.isExpired()) {
-      return null;
+      if (!sessionKey.isExpired()) {
+        return null;
+      }
+
+      const message = await sessionKey.getPersonalMessage();
+
+      const { signature } = await signPersonalMessage({
+        message,
+      });
+
+      sessionKey.setPersonalMessageSignature(signature);
+
+      // Decrypt process
+
+      const encryptedBlobId = post?.blobId;
+
+      if (!encryptedBlobId) {
+        throw new Error("No blob here");
+      }
+
+      const encryptedBlob = await readFile(encryptedBlobId, suiClient);
+
+      const blob = new Blob([new Uint8Array(encryptedBlob)]);
+
+      const textDecoder = new TextDecoder("utf-8");
+      const mainBlobId = textDecoder.decode(await blob.arrayBuffer());
+
+      const tx = new Transaction();
+      if (!creator?.profileId) {
+        throw new Error("No profile id");
+      }
+
+      if (!subscription) {
+        throw new Error("No subscription");
+      }
+
+      tx.moveCall({
+        target: TARGETS.sealApprove,
+        arguments: [
+          tx.object("123"),
+          tx.object(subscription.id),
+          tx.object(creator.profileId),
+          tx.object(CLOCK_ID),
+        ],
+      });
+
+      const txBytes = await tx.build({
+        client: suiClient,
+        onlyTransactionKind: true,
+      });
+
+      const sealClient = new SealClient({
+        suiClient: suiClient,
+        serverConfigs: sealObjectIds.map((id) => {
+          return {
+            objectId: id,
+            weight: 1,
+          };
+        }),
+        verifyKeyServers: false,
+      });
+
+      const decryptedBytes = await sealClient.decrypt({
+        data: encryptedBlob,
+        sessionKey,
+        txBytes,
+      });
+
+      const decoder = new TextDecoder("utf-8");
+
+      const jsonString = decoder.decode(decryptedBytes);
+
+      const postData: {
+        title: string;
+        preview: string;
+        content: string;
+        mediaFiles: { blobId: string; type: "image" | "video" }[];
+      } = JSON.parse(jsonString);
+
+      const mediaBlobs = await Promise.all(
+        postData.mediaFiles.map(async (mediaBlob) => {
+          const bytes = await readFile(mediaBlob.blobId, suiClient);
+          return new Blob([new Uint8Array(bytes)]);
+        }),
+      );
+
+      const mediaUrls = await Promise.all(
+        mediaBlobs.map(async (blob, index) => {
+          return URL.createObjectURL(blob);
+        }),
+      );
+
+      const media = postData.mediaFiles.map((mediaBlob, index) => ({
+        url: mediaUrls[index],
+        type: mediaBlob.type,
+      }));
+
+      showToast("Decrypted", "success");
+    } catch (error) {
+      console.log(error);
+      showToast((error as Error).message, "error");
     }
-
-    const message = await sessionKey.getPersonalMessage();
-
-    const { signature } = await signPersonalMessage({
-      message,
-    });
-
-    sessionKey.setPersonalMessageSignature(signature);
-
-    // Decrypt process
-
-    const encryptedBlobId = post?.blobId;
-
-    if (!encryptedBlobId) {
-      throw new Error("No blob here");
-    }
-
-    const walrusClient = new WalrusClient({
-      suiClient: suiClient,
-      network: "testnet",
-    });
-
-    const encryptedBlob = await walrusClient.readBlob({
-      blobId: encryptedBlobId,
-    });
-
-    const blob = new Blob([new Uint8Array(encryptedBlob)]);
-
-    const textDecoder = new TextDecoder("utf-8");
-    const mainBlobId = textDecoder.decode(await blob.arrayBuffer());
-
-    const tx = new Transaction();
-    tx.moveCall({
-      target: TARGETS.sealApprove,
-    });
-
-    const txBytes = tx.build({ client: suiClient, onlyTransactionKind: true });
-
-    const sealClient = new SealClient({
-      suiClient: suiClient,
-      serverConfigs: sealObjectIds.map((id) => {
-        return {
-          objectId: id,
-          weight: 1,
-        };
-      }),
-      verifyKeyServers: false,
-    });
-
-    // const decryptedBytes = await sealClient.decrypt({
-    //   data: encryptedBytes,
-    //   sessionKey,
-    //   txBytes,
-    // });
   };
 
   useEffect(() => {

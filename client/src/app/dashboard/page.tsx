@@ -7,19 +7,14 @@ import {
   useSignAndExecuteTransaction,
 } from "@mysten/dapp-kit";
 import { useIsCreator, useCreatorPosts, usePublishPost } from "@/hooks";
-import { WalrusClient, WalrusFile } from "@mysten/walrus";
+import { WalrusFile } from "@mysten/walrus";
 import { SealClient } from "@mysten/seal";
 import { CreatePostForm } from "@/components/dashboard";
 import { PostList } from "@/components/post";
 import { PotatoLoader, useToast } from "@/components/ui";
 import { ClientWithCoreApi } from "@mysten/sui/client";
-import {
-  CLOCK_ID,
-  PACKAGE_ID,
-  sealObjectIds,
-  TARGETS,
-} from "@/config/constants";
-import { Transaction } from "@mysten/sui/transactions";
+import { PACKAGE_ID, sealObjectIds } from "@/config/constants";
+import { uploadFiles, uploadWalrusFile } from "@/sdk/walrus";
 
 interface MediaFile {
   file: File;
@@ -82,52 +77,19 @@ export default function DashboardPage() {
         throw new Error("Title, preview and content are required");
       }
 
-      const walrusClient = new WalrusClient({
-        suiClient: suiClient,
-        network: "testnet",
-      });
+      const formatedMediaFiles = mediaFiles.map((mediaFile) => mediaFile.file);
 
-      const filesBlobsForWalrus = [];
+      const files = await uploadFiles(
+        formatedMediaFiles,
+        suiClient,
+        currentAccount,
+        signAndExecuteTransaction,
+      );
 
-      for (const mediaFile of mediaFiles) {
-        const file = new Uint8Array(await mediaFile.file.arrayBuffer());
-        filesBlobsForWalrus.push({
-          contents: file,
-          identifier: mediaFile.file.name,
-        });
-      }
-
-      const flow = await walrusClient.writeFilesFlow({
-        files: filesBlobsForWalrus.map((file) => {
-          return WalrusFile.from({
-            contents: file.contents,
-            identifier: file.identifier,
-          });
-        }),
-      });
-
-      await flow.encode();
-
-      const registerBlobTransaction = await flow.register({
-        epochs: 3,
-        owner: currentAccount.address,
-        deletable: true,
-      });
-
-      const { digest } = await signAndExecuteTransaction({
-        transaction: registerBlobTransaction,
-      });
-
-      await flow.upload({ digest });
-
-      const certifyTx = await flow.certify();
-
-      const { digest: certifyDigest } = await signAndExecuteTransaction({
-        transaction: certifyTx,
-      });
-
-      let files = await flow.listFiles();
-      const listOfMediaBlobIds = files.map((file) => file.blobId);
+      const listOfMediaBlobIds = files.map((file, index) => ({
+        blobId: file.blobId,
+        type: mediaFiles[index].type,
+      }));
 
       // 2. Encrypt content + media references with Seal
 
@@ -167,32 +129,14 @@ export default function DashboardPage() {
         identifier: "encrypted_content",
       });
 
-      const encryptedFlow = await walrusClient.writeFilesFlow({
-        files: [encryptedBlobFile],
-      });
+      const encryptedBlob = await uploadWalrusFile(
+        [encryptedBlobFile],
+        suiClient,
+        currentAccount,
+        signAndExecuteTransaction,
+      );
 
-      await encryptedFlow.encode();
-
-      const registerEncryptedBlobTransaction = await encryptedFlow.register({
-        epochs: 3,
-        owner: currentAccount.address,
-        deletable: true,
-      });
-
-      const { digest: encryptedDigest } = await signAndExecuteTransaction({
-        transaction: registerEncryptedBlobTransaction,
-      });
-
-      await encryptedFlow.upload({ digest: encryptedDigest });
-
-      const certifyEncryptedBlobTransaction = await encryptedFlow.certify();
-
-      const { digest: certifyEncryptedBlobDigest } =
-        await signAndExecuteTransaction({
-          transaction: certifyEncryptedBlobTransaction,
-        });
-
-      const encryptedBlobId = (await encryptedFlow.listFiles())[0].blobId;
+      const encryptedBlobId = encryptedBlob[0].blobId;
 
       // 4. Call publish_post() on smart contract
 
