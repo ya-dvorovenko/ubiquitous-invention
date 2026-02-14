@@ -1,12 +1,18 @@
+export interface SubscriptionTier {
+  durationMs: number;
+  price: number;
+}
+
 export interface Creator {
   address: string;
   name: string;
   suinsName?: string;
   bio: string;
   subscriberCount: number;
-  subscriptionPrice: number;
+  tiers: SubscriptionTier[];
   profileId?: string;
   twitter?: string;
+  avatarBlobId?: string;
 }
 
 export interface PostMedia {

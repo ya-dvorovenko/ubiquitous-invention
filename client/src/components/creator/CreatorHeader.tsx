@@ -3,6 +3,7 @@
 import { Creator } from "@/types";
 import { Avatar, Badge, Button } from "../ui";
 import { formatAddress, formatSui } from "@/utils/format";
+import { getWalrusUrl } from "@/sdk/walrus-http";
 
 interface CreatorHeaderProps {
   creator: Creator;
@@ -30,7 +31,11 @@ export function CreatorHeader({
       }}
     >
       <div className="flex items-start gap-6">
-        <Avatar name={creator.name} size="lg" />
+        <Avatar
+          name={creator.name}
+          size="lg"
+          avatarUrl={creator.avatarBlobId ? getWalrusUrl(creator.avatarBlobId) : undefined}
+        />
 
         <div className="flex-1">
           <div className="flex items-start justify-between">
@@ -53,12 +58,14 @@ export function CreatorHeader({
               <Badge variant="default">Your Profile</Badge>
             ) : isSubscribed ? (
               <Badge variant="success">Subscribed</Badge>
-            ) : (
+            ) : creator.tiers.length > 0 ? (
               <Button onClick={onSubscribe} disabled={isSubscribing}>
                 {isSubscribing
                   ? "Subscribing..."
-                  : `Subscribe (${formatSui(creator.subscriptionPrice)} SUI)`}
+                  : `Subscribe (from ${formatSui(Math.min(...creator.tiers.map(t => t.price)))} SUI)`}
               </Button>
+            ) : (
+              <Badge variant="default">No subscription tiers</Badge>
             )}
           </div>
 

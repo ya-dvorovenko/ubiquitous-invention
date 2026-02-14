@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { Creator } from "@/types";
 import { Card, Avatar, Button } from "@/components/ui";
-import { formatSui } from "@/utils/format";
 
 interface AlreadyCreatorProps {
   creator: Creator;
@@ -25,7 +24,7 @@ export function AlreadyCreator({ creator }: AlreadyCreatorProps) {
             className="mt-1"
             style={{ color: "var(--text-secondary)" }}
           >
-            {creator.name} - {formatSui(creator.subscriptionPrice)} SUI/year
+            {creator.name} - {creator.tiers.length} tier{creator.tiers.length !== 1 ? "s" : ""}
           </p>
         </div>
         <div className="flex gap-3 justify-center">

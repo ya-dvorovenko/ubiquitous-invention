@@ -22,18 +22,24 @@ export async function sponsorTransaction(
   input: SponsorTransactionInput
 ): Promise<SponsorTransactionResult> {
   try {
+    console.log("[Enoki] Creating sponsored transaction for sender:", input.sender);
+
     const result = await enokiClient.createSponsoredTransaction({
       network: SUI_NETWORK,
       transactionKindBytes: input.transactionKindBytes,
       sender: input.sender,
     });
 
+    console.log("[Enoki] Success, digest:", result.digest);
+
     return {
       bytes: result.bytes,
       digest: result.digest,
     };
   } catch (error: unknown) {
-    throw new Error(error instanceof Error ? error.message : String(error));
+    console.error("[Enoki] Error:", error);
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Enoki sponsorship failed: ${message}`);
   }
 }
 

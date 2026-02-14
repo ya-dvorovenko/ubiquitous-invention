@@ -82,9 +82,11 @@ export function SubscriptionCard({
             <span style={{ color: "var(--text-secondary)" }}>
               {creator.subscriberCount} subscribers
             </span>
-            <span style={{ color: "var(--text-secondary)" }}>
-              {formatSui(creator.subscriptionPrice)} SUI/year
-            </span>
+            {creator.tiers.length > 0 && (
+              <span style={{ color: "var(--text-secondary)" }}>
+                from {formatSui(Math.min(...creator.tiers.map(t => t.price)))} SUI
+              </span>
+            )}
           </div>
         </div>
       </Card>

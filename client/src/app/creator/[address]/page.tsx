@@ -19,28 +19,37 @@ export default function CreatorProfilePage() {
   const currentAccount = useCurrentAccount();
   const { showToast } = useToast();
 
-  const { data: creator, isLoading: isLoadingCreator } = useCreatorByAddress(address);
+  const { data: creator, isLoading: isLoadingCreator } =
+    useCreatorByAddress(address);
   const { data: posts, isLoading: isLoadingPosts } = useCreatorPosts(
     creator?.profileId || "",
-    address
+    address,
   );
   const { isSubscribed } = useIsSubscribed(creator?.profileId || "");
   const { subscribe, isPending: isSubscribing } = useSubscribe();
 
   const isOwnProfile = currentAccount?.address === address;
 
-  const handleSubscribe = async () => {
+  const handleSubscribe = async (tierIndex: number = 0) => {
     if (!creator?.profileId || !currentAccount || isOwnProfile) return;
+    if (creator.tiers.length === 0) return;
+
+    const tier = creator.tiers[tierIndex];
+    if (!tier) return;
 
     try {
       await subscribe({
         profileId: creator.profileId,
-        price: creator.subscriptionPrice,
+        tierIndex,
+        price: tier.price,
       });
       showToast(`Subscribed to ${creator.name}!`, "success");
     } catch (error) {
       console.error("Subscribe failed:", error);
-      showToast(error instanceof Error ? error.message : "Subscribe failed", "error");
+      showToast(
+        error instanceof Error ? error.message : "Subscribe failed",
+        "error",
+      );
     }
   };
 
@@ -65,7 +74,7 @@ export default function CreatorProfilePage() {
         postsCount={posts?.length || 0}
         isSubscribed={isSubscribed || isOwnProfile}
         isSubscribing={isSubscribing}
-        onSubscribe={isOwnProfile ? undefined : handleSubscribe}
+        onSubscribe={isOwnProfile ? undefined : () => handleSubscribe(0)}
         isOwnProfile={isOwnProfile}
       />
 

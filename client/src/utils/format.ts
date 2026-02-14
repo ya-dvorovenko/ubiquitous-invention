@@ -21,3 +21,16 @@ export function formatDate(dateString: string): string {
     day: "numeric",
   });
 }
+
+export function formatDuration(ms: number): string {
+  const days = ms / (1000 * 60 * 60 * 24);
+  if (days >= 365) {
+    const years = Math.round(days / 365);
+    return years === 1 ? "1 year" : `${years} years`;
+  }
+  if (days >= 30) {
+    const months = Math.round(days / 30);
+    return months === 1 ? "1 month" : `${months} months`;
+  }
+  return days === 1 ? "1 day" : `${Math.round(days)} days`;
+}

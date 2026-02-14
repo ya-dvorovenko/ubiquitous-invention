@@ -31,6 +31,11 @@ interface EventsResponse {
   };
 }
 
+interface TierJson {
+  duration_ms: string;
+  price: string;
+}
+
 interface ProfileResponse {
   object: {
     address: string;
@@ -42,7 +47,9 @@ interface ProfileResponse {
           owner: string;
           name: string;
           bio: string;
-          price: string;
+          x_profile: string;
+          avatar_blob_id: string;
+          tiers: TierJson[];
           total_posts: string;
           total_subs: string;
           created_at: string;
@@ -63,13 +70,19 @@ async function fetchCreatorProfile(profileId: string): Promise<Creator | null> {
     }
 
     const profile = data.object.asMoveObject.contents.json;
+    const tiers = (profile.tiers || []).map((t: TierJson) => ({
+      durationMs: parseInt(t.duration_ms, 10),
+      price: parseInt(t.price, 10),
+    }));
     return {
       address: profile.owner,
       name: profile.name,
       bio: profile.bio,
       subscriberCount: parseInt(profile.total_subs, 10),
-      subscriptionPrice: parseInt(profile.price, 10),
+      tiers,
       profileId: data.object.address,
+      twitter: profile.x_profile || undefined,
+      avatarBlobId: profile.avatar_blob_id || undefined,
     };
   } catch {
     return null;

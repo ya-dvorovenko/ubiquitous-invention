@@ -2,7 +2,11 @@
 
 import { useEffect, useState, useRef } from "react";
 import { SealClient, SessionKey } from "@mysten/seal";
-import { useSuiClient, useSignPersonalMessage } from "@mysten/dapp-kit";
+import {
+  useSuiClient,
+  useSignPersonalMessage,
+  useCurrentAccount,
+} from "@mysten/dapp-kit";
 import { Transaction } from "@mysten/sui/transactions";
 import { Post, Creator, PostMedia, Subscription } from "@/types";
 import { Card, MediaGallery, PotatoLoader, useToast } from "../ui";
@@ -13,7 +17,9 @@ import {
   sealObjectIds,
   TARGETS,
 } from "@/config/constants";
-import { readFile } from "@/sdk/walrus";
+import { readBlobHttp } from "@/sdk/walrus-http";
+import { fromHex } from "@mysten/sui/utils";
+import { bcs } from "@mysten/sui/bcs";
 
 interface PostContentProps {
   post: Post;
@@ -21,11 +27,12 @@ interface PostContentProps {
   isSubscribed: boolean;
   subscription?: Subscription | null;
   onSubscribe?: () => void;
+  isOwnPost?: boolean;
 }
 
 interface DecryptedPostData {
   content: string;
-  media: PostMedia[];
+  media?: PostMedia[];
 }
 
 export function PostContent({
@@ -34,9 +41,11 @@ export function PostContent({
   isSubscribed,
   subscription,
   onSubscribe,
+  isOwnPost = false,
 }: PostContentProps) {
   const suiClient = useSuiClient();
   const { mutateAsync: signPersonalMessage } = useSignPersonalMessage();
+  const currentAccount = useCurrentAccount();
   const { showToast } = useToast();
 
   const [decrypted, setDecrypted] = useState<DecryptedPostData | null>(null);
@@ -44,8 +53,16 @@ export function PostContent({
   const [decryptError, setDecryptError] = useState<string | null>(null);
   const mediaUrlsRef = useRef<string[]>([]);
 
+  const canDecrypt = (isSubscribed && subscription) || isOwnPost;
+
   useEffect(() => {
-    if (!isSubscribed || !post.blobId || !creator?.address || !creator?.profileId || !subscription) {
+    if (
+      !isSubscribed ||
+      !post.blobId ||
+      !creator?.address ||
+      !creator?.profileId ||
+      !subscription
+    ) {
       setDecrypted(null);
       setDecryptError(null);
       return;
@@ -54,48 +71,57 @@ export function PostContent({
     let cancelled = false;
 
     const decryptAndLoad = async () => {
+      if (!currentAccount?.address) return;
+
       setIsDecrypting(true);
       setDecryptError(null);
 
       try {
         const sessionKey = await SessionKey.create({
-          address: creator.address,
+          address: currentAccount.address,
           packageId: PACKAGE_ID,
           ttlMin: 10,
           suiClient,
         });
 
-        if (!sessionKey.isExpired()) {
-          setIsDecrypting(false);
-          return;
-        }
-
         const message = await sessionKey.getPersonalMessage();
         const { signature } = await signPersonalMessage({ message });
+
         sessionKey.setPersonalMessageSignature(signature);
 
-        const encryptedBlobId = post.blobId!;
-        const encryptedBlob = await readFile(encryptedBlobId, suiClient);
+        const encryptedBlobId = post.blobId;
+        const encryptedBlob = await readBlobHttp(encryptedBlobId);
 
+        console.log("Encrypted Blob", encryptedBlob);
+
+        // Build the seal_approve transaction (not execute - just build for Seal verification)
         const tx = new Transaction();
+
+        const profileIdBytes = fromHex(creator.profileId!);
+        const nonce = new Uint8Array(8).fill(0); // Same nonce as used during encryption
+        const idBytes = new Uint8Array([...profileIdBytes, ...nonce]);
+
         tx.moveCall({
           target: TARGETS.sealApprove,
           arguments: [
-            tx.object("123"),
+            tx.pure.vector("u8", idBytes),
             tx.object(subscription.id),
             tx.object(creator.profileId!),
             tx.object(CLOCK_ID),
           ],
         });
 
-        const txBytes = await tx.build({
-          client: suiClient,
-          onlyTransactionKind: true,
-        });
+        // Build transaction bytes for Seal (onlyTransactionKind: true)
+        const txBytes = await tx.build({ client: suiClient, onlyTransactionKind: true });
+
+        console.log("Built TX bytes for Seal decryption");
 
         const sealClient = new SealClient({
           suiClient,
-          serverConfigs: sealObjectIds.map((id) => ({ objectId: id, weight: 1 })),
+          serverConfigs: sealObjectIds.map((id) => ({
+            objectId: id,
+            weight: 1,
+          })),
           verifyKeyServers: false,
         });
 
@@ -105,6 +131,8 @@ export function PostContent({
           txBytes,
         });
 
+        console.log("Decrypted Bytes", decryptedBytes);
+
         const jsonString = new TextDecoder("utf-8").decode(decryptedBytes);
         const postData: {
           title: string;
@@ -113,30 +141,32 @@ export function PostContent({
           mediaFiles: { blobId: string; type: "image" | "video" }[];
         } = JSON.parse(jsonString);
 
-        const mediaBlobs = await Promise.all(
-          postData.mediaFiles.map(async (mediaBlob) => {
-            const bytes = await readFile(mediaBlob.blobId, suiClient);
-            return new Blob([new Uint8Array(bytes)]);
-          }),
-        );
+        console.log("Post Data", postData);
 
-        const urls = mediaBlobs.map((blob) => URL.createObjectURL(blob));
-        mediaUrlsRef.current = urls;
+        // const mediaBlobs = await Promise.all(
+        //   postData.mediaFiles.map(async (mediaBlob) => {
+        //     const bytes = await readBlobHttp(mediaBlob.blobId);
+        //     return new Blob([new Uint8Array(bytes)]);
+        //   }),
+        // );
 
-        const media: PostMedia[] = postData.mediaFiles.map((m, index) => ({
-          url: urls[index],
-          type: m.type,
-        }));
+        // const urls = mediaBlobs.map((blob) => URL.createObjectURL(blob));
+        // mediaUrlsRef.current = urls;
+
+        // const media: PostMedia[] = postData.mediaFiles.map((m, index) => ({
+        //   url: urls[index],
+        //   type: m.type,
+        // }));
 
         if (!cancelled) {
-          setDecrypted({ content: postData.content, media });
+          setDecrypted({ content: postData.content });
           showToast("Content decrypted", "success");
         }
       } catch (error) {
         if (!cancelled) {
-          const message = (error as Error).message;
-          setDecryptError(message);
-          showToast(message, "error");
+          const errorMessage = (error as Error).message;
+          setDecryptError(errorMessage);
+          showToast(errorMessage, "error");
         }
       } finally {
         if (!cancelled) {
@@ -153,17 +183,22 @@ export function PostContent({
       mediaUrlsRef.current = [];
     };
   }, [
-    isSubscribed,
+    canDecrypt,
+    isOwnPost,
     post.blobId,
+    post.encrypted,
+    post.id,
     creator?.address,
     creator?.profileId,
+    currentAccount,
     subscription?.id,
     signPersonalMessage,
     suiClient,
     showToast,
   ]);
 
-  if (!isSubscribed) {
+  // Not subscribed and not own post - show paywall
+  if (!isSubscribed && !isOwnPost) {
     return (
       <div>
         <Card className="mb-6">
@@ -175,9 +210,8 @@ export function PostContent({
     );
   }
 
-  const needsDecrypt = post.encrypted && !!subscription;
-  const content = needsDecrypt ? decrypted?.content : post.blobId;
-  const media = needsDecrypt ? decrypted?.media : undefined;
+  // Subscribed: show decrypted content when we have blobId, otherwise fallback
+  const needsDecrypt = !!post.blobId && !!subscription;
 
   if (needsDecrypt && isDecrypting) {
     return (
@@ -196,6 +230,17 @@ export function PostContent({
       </Card>
     );
   }
+
+  if (needsDecrypt && !decrypted) {
+    return (
+      <Card>
+        <p style={{ color: "var(--text-secondary)" }}>{post.preview}</p>
+      </Card>
+    );
+  }
+
+  const content = needsDecrypt ? decrypted?.content : post.preview;
+  const media = needsDecrypt ? decrypted?.media : undefined;
 
   return (
     <div className="flex flex-col gap-6">
