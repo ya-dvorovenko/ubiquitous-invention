@@ -19,10 +19,11 @@ export default function CreatorProfilePage() {
   const currentAccount = useCurrentAccount();
   const { showToast } = useToast();
 
-  const { data: creator, isLoading: isLoadingCreator } = useCreatorByAddress(address);
+  const { data: creator, isLoading: isLoadingCreator } =
+    useCreatorByAddress(address);
   const { data: posts, isLoading: isLoadingPosts } = useCreatorPosts(
     creator?.profileId || "",
-    address
+    address,
   );
   const { isSubscribed } = useIsSubscribed(creator?.profileId || "");
   const { subscribe, isPending: isSubscribing } = useSubscribe();
@@ -45,7 +46,10 @@ export default function CreatorProfilePage() {
       showToast(`Subscribed to ${creator.name}!`, "success");
     } catch (error) {
       console.error("Subscribe failed:", error);
-      showToast(error instanceof Error ? error.message : "Subscribe failed", "error");
+      showToast(
+        error instanceof Error ? error.message : "Subscribe failed",
+        "error",
+      );
     }
   };
 
