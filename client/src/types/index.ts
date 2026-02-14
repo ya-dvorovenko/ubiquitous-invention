@@ -11,7 +11,6 @@ export interface Creator {
 export interface PostMedia {
   url: string;
   type: "image" | "video";
-  blobId?: string;
 }
 
 export interface Post {
@@ -20,12 +19,9 @@ export interface Post {
   creatorAddress: string;
   title: string;
   preview: string;
-  previewMedia?: PostMedia[];
-  content?: string;
-  media?: PostMedia[];
+  blobId: string;
+  encrypted: boolean;
   createdAt: string;
-  blobId?: string;
-  encrypted?: boolean;
 }
 
 export interface Subscription {

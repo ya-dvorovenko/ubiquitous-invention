@@ -21,6 +21,7 @@ public struct CreatorProfile has key {
     owner: address,
     name: String,
     bio: String,
+    x_profile: String,
     price: u64,
     total_posts: u64,
     total_subs: u64,
@@ -70,6 +71,7 @@ fun init(otw: CREATOR, ctx: &mut TxContext) {
 entry fun register(
     name: String,
     bio: String,
+    x_profile: String,
     price: u64,
     clock: &Clock,
     ctx: &mut TxContext,
@@ -79,6 +81,7 @@ entry fun register(
         owner: ctx.sender(),
         name,
         bio,
+        x_profile,
         price,
         total_posts: 0,
         total_subs: 0,
@@ -154,6 +157,7 @@ fun test_register_and_publish_post() {
     register(
         b"TestCreator".to_string(),
         b"Bio".to_string(),
+        b"".to_string(),
         1000,
         &clock,
         ts.ctx(),
@@ -193,6 +197,7 @@ fun test_has_post() {
     register(
         b"TestCreator".to_string(),
         b"Bio".to_string(),
+        b"".to_string(),
         1000,
         &clock,
         ts.ctx(),
@@ -248,6 +253,7 @@ fun test_publish_post_wrong_cap_fails() {
     register(
         b"TestCreator".to_string(),
         b"Bio".to_string(),
+        b"".to_string(),
         1000,
         &clock,
         ts.ctx(),
@@ -264,6 +270,7 @@ fun test_publish_post_wrong_cap_fails() {
     register(
         b"OtherCreator".to_string(),
         b"Bio2".to_string(),
+        b"".to_string(),
         500,
         &clock,
         ts.ctx(),

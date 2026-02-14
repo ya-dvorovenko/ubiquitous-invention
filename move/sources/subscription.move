@@ -102,6 +102,7 @@ fun test_subscribe() {
     suipatron::creator::register(
         b"Creator".to_string(),
         b"Bio".to_string(),
+        b"".to_string(),
         1000,
         &clock,
         ts.ctx(),
@@ -134,6 +135,7 @@ fun test_is_subscribed() {
     suipatron::creator::register(
         b"Creator".to_string(),
         b"Bio".to_string(),
+        b"".to_string(),
         1000,
         &clock,
         ts.ctx(),
@@ -174,6 +176,7 @@ fun test_subscribe_insufficient_payment() {
     suipatron::creator::register(
         b"Creator".to_string(),
         b"Bio".to_string(),
+        b"".to_string(),
         1000,
         &clock,
         ts.ctx(),
@@ -201,6 +204,7 @@ fun test_subscribe_twice_fails() {
     suipatron::creator::register(
         b"Creator".to_string(),
         b"Bio".to_string(),
+        b"".to_string(),
         1000,
         &clock,
         ts.ctx(),

@@ -166,40 +166,18 @@ export function PostContent({
   if (!isSubscribed) {
     return (
       <div>
-        {post.previewMedia && post.previewMedia.length > 0 && (
-          <div className="mb-6">
-            <MediaGallery media={post.previewMedia} />
-          </div>
-        )}
-
         <Card className="mb-6">
           <p style={{ color: "var(--text-secondary)" }}>{post.preview}</p>
         </Card>
-
-        {post.media && post.media.length > 0 && (
-          <div className="mb-6">
-            <p
-              className="text-sm mb-2"
-              style={{ color: "var(--text-secondary)" }}
-            >
-              {post.media.length} exclusive{" "}
-              {post.media.length === 1 ? "media" : "media files"} for subscribers
-            </p>
-            <MediaGallery media={post.media.slice(0, 3)} blur />
-          </div>
-        )}
 
         <Paywall creator={creator} onSubscribe={onSubscribe} />
       </div>
     );
   }
 
-  // Subscribed: show decrypted content when we have blobId, otherwise fallback
-  const needsDecrypt = !!post.blobId && !!subscription;
-  const content = needsDecrypt
-    ? decrypted?.content ?? post.content ?? post.blobId
-    : post.content ?? post.blobId;
-  const media = needsDecrypt ? decrypted?.media : post.media;
+  const needsDecrypt = post.encrypted && !!subscription;
+  const content = needsDecrypt ? decrypted?.content : post.blobId;
+  const media = needsDecrypt ? decrypted?.media : undefined;
 
   if (needsDecrypt && isDecrypting) {
     return (
