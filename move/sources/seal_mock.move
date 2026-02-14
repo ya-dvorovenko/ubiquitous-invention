@@ -65,7 +65,6 @@ fun test_full_flow() {
         b"TestCreator".to_string(),
         b"Test bio".to_string(),
         b"".to_string(),
-        1000,
         &clock,
         ts.ctx(),
     );
@@ -74,6 +73,9 @@ fun test_full_flow() {
 
     let cap = ts.take_from_sender<CreatorCap>();
     let mut profile = ts.take_shared<CreatorProfile>();
+
+    // Add a tier
+    suipatron::creator::add_tier(&cap, &mut profile, 31536000000, 1000);
 
     suipatron::creator::publish_post(
         &cap,
@@ -94,7 +96,7 @@ fun test_full_flow() {
     let mut profile = ts.take_shared<CreatorProfile>();
     let mut payment = coin::mint_for_testing<SUI>(1000, ts.ctx());
 
-    suipatron::subscription::subscribe(&mut profile, &mut payment, &clock, ts.ctx());
+    suipatron::subscription::subscribe(&mut profile, 0, &mut payment, &clock, ts.ctx());
 
     ts::return_shared(profile);
     coin::burn_for_testing(payment);
@@ -119,16 +121,23 @@ fun test_assert_access_wrong_profile() {
         b"Creator1".to_string(),
         b"Bio".to_string(),
         b"".to_string(),
-        1000,
         &clock,
         ts.ctx(),
     );
+
+    ts.next_tx(CREATOR_ADDR);
+
+    let cap = ts.take_from_sender<CreatorCap>();
+    let mut profile = ts.take_shared<CreatorProfile>();
+    suipatron::creator::add_tier(&cap, &mut profile, 31536000000, 1000);
+    ts.return_to_sender(cap);
+    ts::return_shared(profile);
 
     ts.next_tx(SUBSCRIBER);
 
     let mut profile = ts.take_shared<CreatorProfile>();
     let mut payment = coin::mint_for_testing<SUI>(1000, ts.ctx());
-    suipatron::subscription::subscribe(&mut profile, &mut payment, &clock, ts.ctx());
+    suipatron::subscription::subscribe(&mut profile, 0, &mut payment, &clock, ts.ctx());
     ts::return_shared(profile);
     coin::burn_for_testing(payment);
 
@@ -154,17 +163,24 @@ fun test_assert_access_expired() {
         b"Creator1".to_string(),
         b"Bio".to_string(),
         b"".to_string(),
-        1000,
         &clock,
         ts.ctx(),
     );
+
+    ts.next_tx(CREATOR_ADDR);
+
+    let cap = ts.take_from_sender<CreatorCap>();
+    let mut profile = ts.take_shared<CreatorProfile>();
+    suipatron::creator::add_tier(&cap, &mut profile, 31536000000, 1000);
+    ts.return_to_sender(cap);
+    ts::return_shared(profile);
 
     ts.next_tx(SUBSCRIBER);
 
     let mut profile = ts.take_shared<CreatorProfile>();
     let profile_id = object::id(&profile);
     let mut payment = coin::mint_for_testing<SUI>(1000, ts.ctx());
-    suipatron::subscription::subscribe(&mut profile, &mut payment, &clock, ts.ctx());
+    suipatron::subscription::subscribe(&mut profile, 0, &mut payment, &clock, ts.ctx());
     ts::return_shared(profile);
     coin::burn_for_testing(payment);
 
@@ -193,17 +209,24 @@ fun test_seal_approve_success() {
         b"Creator1".to_string(),
         b"Bio".to_string(),
         b"".to_string(),
-        1000,
         &clock,
         ts.ctx(),
     );
 
+    ts.next_tx(CREATOR_ADDR);
+
+    let cap = ts.take_from_sender<CreatorCap>();
+    let mut profile = ts.take_shared<CreatorProfile>();
+    suipatron::creator::add_tier(&cap, &mut profile, 31536000000, 1000);
+    let profile_id = object::id(&profile);
+    ts.return_to_sender(cap);
+    ts::return_shared(profile);
+
     ts.next_tx(SUBSCRIBER);
 
     let mut profile = ts.take_shared<CreatorProfile>();
-    let profile_id = object::id(&profile);
     let mut payment = coin::mint_for_testing<SUI>(1000, ts.ctx());
-    suipatron::subscription::subscribe(&mut profile, &mut payment, &clock, ts.ctx());
+    suipatron::subscription::subscribe(&mut profile, 0, &mut payment, &clock, ts.ctx());
     ts::return_shared(profile);
     coin::burn_for_testing(payment);
 
@@ -235,10 +258,17 @@ fun test_seal_approve_wrong_profile() {
         b"Creator1".to_string(),
         b"Bio".to_string(),
         b"".to_string(),
-        1000,
         &clock,
         ts.ctx(),
     );
+
+    ts.next_tx(CREATOR_ADDR);
+
+    let cap1 = ts.take_from_sender<CreatorCap>();
+    let mut profile1 = ts.take_shared<CreatorProfile>();
+    suipatron::creator::add_tier(&cap1, &mut profile1, 31536000000, 1000);
+    ts.return_to_sender(cap1);
+    ts::return_shared(profile1);
 
     ts.next_tx(@0xDD);
 
@@ -246,16 +276,23 @@ fun test_seal_approve_wrong_profile() {
         b"Creator2".to_string(),
         b"Bio2".to_string(),
         b"".to_string(),
-        500,
         &clock,
         ts.ctx(),
     );
+
+    ts.next_tx(@0xDD);
+
+    let cap2 = ts.take_from_sender<CreatorCap>();
+    let mut profile2 = ts.take_shared<CreatorProfile>();
+    suipatron::creator::add_tier(&cap2, &mut profile2, 31536000000, 500);
+    ts.return_to_sender(cap2);
+    ts::return_shared(profile2);
 
     ts.next_tx(SUBSCRIBER);
 
     let mut profile1 = ts.take_shared<CreatorProfile>();
     let mut payment = coin::mint_for_testing<SUI>(1000, ts.ctx());
-    suipatron::subscription::subscribe(&mut profile1, &mut payment, &clock, ts.ctx());
+    suipatron::subscription::subscribe(&mut profile1, 0, &mut payment, &clock, ts.ctx());
     ts::return_shared(profile1);
     coin::burn_for_testing(payment);
 
@@ -287,17 +324,24 @@ fun test_seal_approve_expired() {
         b"Creator1".to_string(),
         b"Bio".to_string(),
         b"".to_string(),
-        1000,
         &clock,
         ts.ctx(),
     );
 
+    ts.next_tx(CREATOR_ADDR);
+
+    let cap = ts.take_from_sender<CreatorCap>();
+    let mut profile = ts.take_shared<CreatorProfile>();
+    suipatron::creator::add_tier(&cap, &mut profile, 31536000000, 1000);
+    let profile_id = object::id(&profile);
+    ts.return_to_sender(cap);
+    ts::return_shared(profile);
+
     ts.next_tx(SUBSCRIBER);
 
     let mut profile = ts.take_shared<CreatorProfile>();
-    let profile_id = object::id(&profile);
     let mut payment = coin::mint_for_testing<SUI>(1000, ts.ctx());
-    suipatron::subscription::subscribe(&mut profile, &mut payment, &clock, ts.ctx());
+    suipatron::subscription::subscribe(&mut profile, 0, &mut payment, &clock, ts.ctx());
     ts::return_shared(profile);
     coin::burn_for_testing(payment);
 
@@ -329,16 +373,23 @@ fun test_seal_approve_wrong_id_prefix() {
         b"Creator1".to_string(),
         b"Bio".to_string(),
         b"".to_string(),
-        1000,
         &clock,
         ts.ctx(),
     );
+
+    ts.next_tx(CREATOR_ADDR);
+
+    let cap = ts.take_from_sender<CreatorCap>();
+    let mut profile = ts.take_shared<CreatorProfile>();
+    suipatron::creator::add_tier(&cap, &mut profile, 31536000000, 1000);
+    ts.return_to_sender(cap);
+    ts::return_shared(profile);
 
     ts.next_tx(SUBSCRIBER);
 
     let mut profile = ts.take_shared<CreatorProfile>();
     let mut payment = coin::mint_for_testing<SUI>(1000, ts.ctx());
-    suipatron::subscription::subscribe(&mut profile, &mut payment, &clock, ts.ctx());
+    suipatron::subscription::subscribe(&mut profile, 0, &mut payment, &clock, ts.ctx());
     ts::return_shared(profile);
     coin::burn_for_testing(payment);
 

@@ -8,8 +8,14 @@ use sui::package;
 use sui::display;
 
 const EWrongProfile: u64 = 0;
+const EInvalidTierIndex: u64 = 1;
 
 public struct CREATOR has drop {}
+
+public struct SubscriptionTier has store, copy, drop {
+    duration_ms: u64,
+    price: u64,
+}
 
 public struct CreatorCap has key, store {
     id: UID,
@@ -22,7 +28,7 @@ public struct CreatorProfile has key {
     name: String,
     bio: String,
     x_profile: String,
-    price: u64,
+    tiers: vector<SubscriptionTier>,
     total_posts: u64,
     total_subs: u64,
     created_at: u64,
@@ -72,7 +78,6 @@ entry fun register(
     name: String,
     bio: String,
     x_profile: String,
-    price: u64,
     clock: &Clock,
     ctx: &mut TxContext,
 ) {
@@ -82,7 +87,7 @@ entry fun register(
         name,
         bio,
         x_profile,
-        price,
+        tiers: vector::empty<SubscriptionTier>(),
         total_posts: 0,
         total_subs: 0,
         created_at: clock.timestamp_ms(),
@@ -132,15 +137,25 @@ entry fun publish_post(
     });
 }
 
-public(package) fun price(p: &CreatorProfile): u64 { p.price }
+entry fun add_tier(
+    cap: &CreatorCap,
+    profile: &mut CreatorProfile,
+    duration_ms: u64,
+    price: u64,
+) {
+    assert!(cap.profile_id == object::id(profile), EWrongProfile);
+    profile.tiers.push_back(SubscriptionTier { duration_ms, price });
+}
+
+public(package) fun tier(p: &CreatorProfile, i: u64): (u64, u64) {
+    assert!(i < p.tiers.length(), EInvalidTierIndex);
+    (p.tiers[i].price, p.tiers[i].duration_ms)
+}
 public(package) fun owner(p: &CreatorProfile): address { p.owner }
 public(package) fun inc_subs(p: &mut CreatorProfile) { p.total_subs = p.total_subs + 1; }
 public(package) fun profile_uid(p: &mut CreatorProfile): &mut UID { &mut p.id }
 public(package) fun profile_uid_ref(p: &CreatorProfile): &UID { &p.id }
 
-public fun has_post(p: &CreatorProfile, post_id: u64): bool {
-    df::exists_(&p.id, PostKey { post_id })
-}
 
 #[test_only]
 use sui::{test_scenario as ts, clock};
@@ -158,7 +173,6 @@ fun test_register_and_publish_post() {
         b"TestCreator".to_string(),
         b"Bio".to_string(),
         b"".to_string(),
-        1000,
         &clock,
         ts.ctx(),
     );
@@ -168,6 +182,11 @@ fun test_register_and_publish_post() {
     let cap = ts.take_from_sender<CreatorCap>();
     let mut profile = ts.take_shared<CreatorProfile>();
     assert!(profile.total_posts == 0);
+    assert!(profile.tiers.length() == 0);
+
+    // Add a tier
+    add_tier(&cap, &mut profile, 31536000000, 1000); // 1 year, 1000 MIST
+    assert!(profile.tiers.length() == 1);
 
     publish_post(
         &cap,
@@ -188,62 +207,6 @@ fun test_register_and_publish_post() {
     ts.end();
 }
 
-#[test]
-fun test_has_post() {
-    let mut ts = ts::begin(CREATOR_ADDR);
-
-    let clock = clock::create_for_testing(ts.ctx());
-
-    register(
-        b"TestCreator".to_string(),
-        b"Bio".to_string(),
-        b"".to_string(),
-        1000,
-        &clock,
-        ts.ctx(),
-    );
-
-    ts.next_tx(CREATOR_ADDR);
-
-    let cap = ts.take_from_sender<CreatorCap>();
-    let mut profile = ts.take_shared<CreatorProfile>();
-
-    assert!(!has_post(&profile, 0));
-    assert!(!has_post(&profile, 1));
-
-    publish_post(
-        &cap,
-        &mut profile,
-        b"Post 1".to_string(),
-        b"Preview".to_string(),
-        b"blob123".to_string(),
-        true,
-        &clock,
-    );
-
-    assert!(has_post(&profile, 0));
-    assert!(!has_post(&profile, 1));
-
-    publish_post(
-        &cap,
-        &mut profile,
-        b"Post 2".to_string(),
-        b"Preview 2".to_string(),
-        b"blob456".to_string(),
-        false,
-        &clock,
-    );
-
-    assert!(has_post(&profile, 0));
-    assert!(has_post(&profile, 1));
-    assert!(!has_post(&profile, 2));
-
-    ts.return_to_sender(cap);
-    ts::return_shared(profile);
-    clock.destroy_for_testing();
-    ts.end();
-}
-
 #[test, expected_failure(abort_code = EWrongProfile)]
 fun test_publish_post_wrong_cap_fails() {
     let mut ts = ts::begin(CREATOR_ADDR);
@@ -254,7 +217,6 @@ fun test_publish_post_wrong_cap_fails() {
         b"TestCreator".to_string(),
         b"Bio".to_string(),
         b"".to_string(),
-        1000,
         &clock,
         ts.ctx(),
     );
@@ -271,7 +233,6 @@ fun test_publish_post_wrong_cap_fails() {
         b"OtherCreator".to_string(),
         b"Bio2".to_string(),
         b"".to_string(),
-        500,
         &clock,
         ts.ctx(),
     );

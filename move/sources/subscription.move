@@ -44,6 +44,7 @@ fun init(otw: SUBSCRIPTION, ctx: &mut TxContext) {
 
 entry fun subscribe(
     profile: &mut CreatorProfile,
+    tier_index: u64,
     payment: &mut Coin<SUI>,
     clock: &Clock,
     ctx: &mut TxContext,
@@ -53,14 +54,15 @@ entry fun subscribe(
 
     assert!(!df::exists_(creator::profile_uid(profile), subscriber), EAlreadySubscribed);
 
-    let price = creator::price(profile);
+    // tier() will abort with EInvalidTierIndex if tier_index is out of bounds
+    let (price, duration_ms) = creator::tier(profile, tier_index);
     assert!(payment.value() >= price, EInsufficientPayment);
 
     let paid = payment.split(price, ctx);
     transfer::public_transfer(paid, creator::owner(profile));
 
     let now = clock.timestamp_ms();
-    let expires = now + 31536000000; // 1 year
+    let expires = now + duration_ms;
 
     let sub = Subscription {
         id: object::new(ctx),
@@ -103,17 +105,25 @@ fun test_subscribe() {
         b"Creator".to_string(),
         b"Bio".to_string(),
         b"".to_string(),
-        1000,
         &clock,
         ts.ctx(),
     );
+
+    ts.next_tx(CREATOR_ADDR);
+
+    // Creator adds a tier
+    let cap = ts.take_from_sender<suipatron::creator::CreatorCap>();
+    let mut profile = ts.take_shared<CreatorProfile>();
+    suipatron::creator::add_tier(&cap, &mut profile, 31536000000, 1000); // 1 year, 1000 MIST
+    ts.return_to_sender(cap);
+    ts::return_shared(profile);
 
     ts.next_tx(SUBSCRIBER);
 
     let mut profile = ts.take_shared<CreatorProfile>();
     let mut payment = coin::mint_for_testing<SUI>(1000, ts.ctx());
 
-    subscribe(&mut profile, &mut payment, &clock, ts.ctx());
+    subscribe(&mut profile, 0, &mut payment, &clock, ts.ctx());
 
     ts::return_shared(profile);
     coin::burn_for_testing(payment);
@@ -136,10 +146,18 @@ fun test_is_subscribed() {
         b"Creator".to_string(),
         b"Bio".to_string(),
         b"".to_string(),
-        1000,
         &clock,
         ts.ctx(),
     );
+
+    ts.next_tx(CREATOR_ADDR);
+
+    // Creator adds a tier
+    let cap = ts.take_from_sender<suipatron::creator::CreatorCap>();
+    let mut profile = ts.take_shared<CreatorProfile>();
+    suipatron::creator::add_tier(&cap, &mut profile, 31536000000, 1000);
+    ts.return_to_sender(cap);
+    ts::return_shared(profile);
 
     ts.next_tx(SUBSCRIBER);
 
@@ -152,7 +170,7 @@ fun test_is_subscribed() {
 
     let mut profile = ts.take_shared<CreatorProfile>();
     let mut payment = coin::mint_for_testing<SUI>(1000, ts.ctx());
-    subscribe(&mut profile, &mut payment, &clock, ts.ctx());
+    subscribe(&mut profile, 0, &mut payment, &clock, ts.ctx());
     ts::return_shared(profile);
     coin::burn_for_testing(payment);
 
@@ -177,17 +195,24 @@ fun test_subscribe_insufficient_payment() {
         b"Creator".to_string(),
         b"Bio".to_string(),
         b"".to_string(),
-        1000,
         &clock,
         ts.ctx(),
     );
+
+    ts.next_tx(CREATOR_ADDR);
+
+    let cap = ts.take_from_sender<suipatron::creator::CreatorCap>();
+    let mut profile = ts.take_shared<CreatorProfile>();
+    suipatron::creator::add_tier(&cap, &mut profile, 31536000000, 1000);
+    ts.return_to_sender(cap);
+    ts::return_shared(profile);
 
     ts.next_tx(SUBSCRIBER);
 
     let mut profile = ts.take_shared<CreatorProfile>();
     let mut payment = coin::mint_for_testing<SUI>(500, ts.ctx());
 
-    subscribe(&mut profile, &mut payment, &clock, ts.ctx());
+    subscribe(&mut profile, 0, &mut payment, &clock, ts.ctx());
 
     ts::return_shared(profile);
     coin::burn_for_testing(payment);
@@ -205,16 +230,23 @@ fun test_subscribe_twice_fails() {
         b"Creator".to_string(),
         b"Bio".to_string(),
         b"".to_string(),
-        1000,
         &clock,
         ts.ctx(),
     );
+
+    ts.next_tx(CREATOR_ADDR);
+
+    let cap = ts.take_from_sender<suipatron::creator::CreatorCap>();
+    let mut profile = ts.take_shared<CreatorProfile>();
+    suipatron::creator::add_tier(&cap, &mut profile, 31536000000, 1000);
+    ts.return_to_sender(cap);
+    ts::return_shared(profile);
 
     ts.next_tx(SUBSCRIBER);
 
     let mut profile = ts.take_shared<CreatorProfile>();
     let mut payment1 = coin::mint_for_testing<SUI>(1000, ts.ctx());
-    subscribe(&mut profile, &mut payment1, &clock, ts.ctx());
+    subscribe(&mut profile, 0, &mut payment1, &clock, ts.ctx());
     ts::return_shared(profile);
     coin::burn_for_testing(payment1);
 
@@ -222,7 +254,7 @@ fun test_subscribe_twice_fails() {
 
     let mut profile = ts.take_shared<CreatorProfile>();
     let mut payment2 = coin::mint_for_testing<SUI>(1000, ts.ctx());
-    subscribe(&mut profile, &mut payment2, &clock, ts.ctx());
+    subscribe(&mut profile, 0, &mut payment2, &clock, ts.ctx());
 
     ts::return_shared(profile);
     coin::burn_for_testing(payment2);
