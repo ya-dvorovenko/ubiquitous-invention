@@ -6,9 +6,10 @@ import {
   useCurrentAccount,
   useSuiClient,
 } from "@mysten/dapp-kit";
+import { useQueryClient } from "@tanstack/react-query";
 import { useIsCreator, useCreatorPosts, usePublishPost } from "@/hooks";
 import { SealClient } from "@mysten/seal";
-import { CreatePostForm } from "@/components/dashboard";
+import { CreatePostForm, TierManager } from "@/components/dashboard";
 import { PostList } from "@/components/post";
 import { PotatoLoader, useToast } from "@/components/ui";
 import { ClientWithCoreApi } from "@mysten/sui/client";
@@ -23,6 +24,7 @@ interface MediaFile {
 
 export default function DashboardPage() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [isPublishing, setIsPublishing] = useState(false);
   const suiClient = useSuiClient() as ClientWithCoreApi;
   const currentAccount = useCurrentAccount();
@@ -31,6 +33,10 @@ export default function DashboardPage() {
     creatorProfile,
     isLoading: isCreatorLoading,
   } = useIsCreator();
+
+  const handleTierAdded = () => {
+    queryClient.invalidateQueries({ queryKey: ["creators"] });
+  };
 
   const { data: posts, isLoading: isPostsLoading } = useCreatorPosts(
     creatorProfile?.profileId || "",
@@ -213,14 +219,22 @@ export default function DashboardPage() {
       </h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div>
-          <h2
-            className="text-xl font-bold mb-4"
-            style={{ color: "var(--text-primary)" }}
-          >
-            Create New Post
-          </h2>
-          <CreatePostForm onPublish={handlePublish} />
+        <div className="space-y-6">
+          <div>
+            <h2
+              className="text-xl font-bold mb-4"
+              style={{ color: "var(--text-primary)" }}
+            >
+              Create New Post
+            </h2>
+            <CreatePostForm onPublish={handlePublish} />
+          </div>
+
+          <TierManager
+            profileId={creatorProfile?.profileId || ""}
+            existingTiers={creatorProfile?.tiers || []}
+            onTierAdded={handleTierAdded}
+          />
         </div>
 
         <div>

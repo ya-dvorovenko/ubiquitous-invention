@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { SealClient, SessionKey } from "@mysten/seal";
-import { useSuiClient, useSignPersonalMessage } from "@mysten/dapp-kit";
+import { useSuiClient, useSignPersonalMessage, useCurrentAccount } from "@mysten/dapp-kit";
 import { Transaction } from "@mysten/sui/transactions";
 import { Post, Creator, PostMedia, Subscription } from "@/types";
 import { Card, MediaGallery, PotatoLoader, useToast } from "../ui";
@@ -21,6 +21,7 @@ interface PostContentProps {
   isSubscribed: boolean;
   subscription?: Subscription | null;
   onSubscribe?: () => void;
+  isOwnPost?: boolean;
 }
 
 interface DecryptedPostData {
@@ -34,8 +35,10 @@ export function PostContent({
   isSubscribed,
   subscription,
   onSubscribe,
+  isOwnPost = false,
 }: PostContentProps) {
   const suiClient = useSuiClient();
+  const currentAccount = useCurrentAccount();
   const { mutateAsync: signPersonalMessage } = useSignPersonalMessage();
   const { showToast } = useToast();
 
@@ -44,8 +47,10 @@ export function PostContent({
   const [decryptError, setDecryptError] = useState<string | null>(null);
   const mediaUrlsRef = useRef<string[]>([]);
 
+  const canDecrypt = (isSubscribed && subscription) || isOwnPost;
+
   useEffect(() => {
-    if (!isSubscribed || !post.blobId || !creator?.address || !creator?.profileId || !subscription) {
+    if (!canDecrypt || !post.blobId || !post.encrypted || !creator?.address || !creator?.profileId || !currentAccount) {
       setDecrypted(null);
       setDecryptError(null);
       return;
@@ -59,34 +64,40 @@ export function PostContent({
 
       try {
         const sessionKey = await SessionKey.create({
-          address: creator.address,
+          address: currentAccount.address,
           packageId: PACKAGE_ID,
           ttlMin: 10,
           suiClient,
         });
 
-        if (!sessionKey.isExpired()) {
-          setIsDecrypting(false);
-          return;
-        }
-
         const message = await sessionKey.getPersonalMessage();
         const { signature } = await signPersonalMessage({ message });
         sessionKey.setPersonalMessageSignature(signature);
 
-        const encryptedBlobId = post.blobId!;
+        const encryptedBlobId = post.blobId;
         const encryptedBlob = await readBlobHttp(encryptedBlobId);
 
         const tx = new Transaction();
-        tx.moveCall({
-          target: TARGETS.sealApprove,
-          arguments: [
-            tx.object("123"),
-            tx.object(subscription.id),
-            tx.object(creator.profileId!),
-            tx.object(CLOCK_ID),
-          ],
-        });
+
+        if (isOwnPost) {
+          tx.moveCall({
+            target: TARGETS.sealApproveCreator,
+            arguments: [
+              tx.pure.string(post.id),
+              tx.object(creator.profileId!),
+            ],
+          });
+        } else {
+          tx.moveCall({
+            target: TARGETS.sealApprove,
+            arguments: [
+              tx.pure.string(post.id),
+              tx.object(subscription!.id),
+              tx.object(creator.profileId!),
+              tx.object(CLOCK_ID),
+            ],
+          });
+        }
 
         const txBytes = await tx.build({
           client: suiClient,
@@ -134,9 +145,9 @@ export function PostContent({
         }
       } catch (error) {
         if (!cancelled) {
-          const message = (error as Error).message;
-          setDecryptError(message);
-          showToast(message, "error");
+          const errorMessage = (error as Error).message;
+          setDecryptError(errorMessage);
+          showToast(errorMessage, "error");
         }
       } finally {
         if (!cancelled) {
@@ -153,17 +164,22 @@ export function PostContent({
       mediaUrlsRef.current = [];
     };
   }, [
-    isSubscribed,
+    canDecrypt,
+    isOwnPost,
     post.blobId,
+    post.encrypted,
+    post.id,
     creator?.address,
     creator?.profileId,
+    currentAccount,
     subscription?.id,
     signPersonalMessage,
     suiClient,
     showToast,
   ]);
 
-  if (!isSubscribed) {
+  // Not subscribed and not own post - show paywall
+  if (!isSubscribed && !isOwnPost) {
     return (
       <div>
         <Card className="mb-6">
@@ -175,9 +191,8 @@ export function PostContent({
     );
   }
 
-  const needsDecrypt = post.encrypted && !!subscription;
-  const content = needsDecrypt ? decrypted?.content : post.blobId;
-  const media = needsDecrypt ? decrypted?.media : undefined;
+  // For encrypted posts - need to decrypt
+  const needsDecrypt = post.encrypted && canDecrypt;
 
   if (needsDecrypt && isDecrypting) {
     return (
@@ -193,6 +208,18 @@ export function PostContent({
         <p style={{ color: "var(--text-secondary)" }}>
           Could not load content: {decryptError}
         </p>
+      </Card>
+    );
+  }
+
+  // Show decrypted content or preview if still loading
+  const content = needsDecrypt ? decrypted?.content : post.preview;
+  const media = needsDecrypt ? decrypted?.media : undefined;
+
+  if (needsDecrypt && !decrypted) {
+    return (
+      <Card>
+        <p style={{ color: "var(--text-secondary)" }}>{post.preview}</p>
       </Card>
     );
   }

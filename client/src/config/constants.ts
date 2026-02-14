@@ -12,6 +12,7 @@ export const TARGETS = {
   subscribe: `${PACKAGE_ID}::subscription::subscribe`,
   assertAccess: `${PACKAGE_ID}::seal_mock::assert_access`,
   sealApprove: `${PACKAGE_ID}::seal_mock::seal_approve`,
+  sealApproveCreator: `${PACKAGE_ID}::seal_mock::seal_approve_creator`,
 } as const;
 
 export const TYPES = {

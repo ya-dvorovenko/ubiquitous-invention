@@ -70,6 +70,7 @@ export default function PostViewPage() {
           creator={creator}
           isSubscribed={isSubscribed || isOwnPost}
           subscription={subscription}
+          isOwnPost={isOwnPost}
         />
       </article>
     </div>
