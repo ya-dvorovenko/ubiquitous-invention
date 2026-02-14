@@ -22,6 +22,7 @@ public struct CreatorProfile has key {
     name: String,
     bio: String,
     x_profile: String,
+    avatar_blob_id: String,
     price: u64,
     total_posts: u64,
     total_subs: u64,
@@ -72,6 +73,7 @@ entry fun register(
     name: String,
     bio: String,
     x_profile: String,
+    avatar_blob_id: String,
     price: u64,
     clock: &Clock,
     ctx: &mut TxContext,
@@ -82,6 +84,7 @@ entry fun register(
         name,
         bio,
         x_profile,
+        avatar_blob_id,
         price,
         total_posts: 0,
         total_subs: 0,
@@ -157,6 +160,7 @@ fun test_register_and_publish_post() {
     register(
         b"TestCreator".to_string(),
         b"Bio".to_string(),
+        b"@testcreator".to_string(),
         b"".to_string(),
         1000,
         &clock,
@@ -197,6 +201,7 @@ fun test_has_post() {
     register(
         b"TestCreator".to_string(),
         b"Bio".to_string(),
+        b"@testcreator".to_string(),
         b"".to_string(),
         1000,
         &clock,
@@ -253,6 +258,7 @@ fun test_publish_post_wrong_cap_fails() {
     register(
         b"TestCreator".to_string(),
         b"Bio".to_string(),
+        b"@testcreator".to_string(),
         b"".to_string(),
         1000,
         &clock,
@@ -270,6 +276,7 @@ fun test_publish_post_wrong_cap_fails() {
     register(
         b"OtherCreator".to_string(),
         b"Bio2".to_string(),
+        b"@othercreator".to_string(),
         b"".to_string(),
         500,
         &clock,

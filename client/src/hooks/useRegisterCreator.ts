@@ -9,6 +9,8 @@ import { Transaction } from "@mysten/sui/transactions";
 interface RegisterParams {
   name: string;
   bio: string;
+  xProfile: string;
+  avatarBlobId: string;
   price: number;
 }
 
@@ -18,7 +20,7 @@ export function useRegisterCreator() {
   const currentAccount = useCurrentAccount();
   const { sponsorAndExecute, isPending } = useSponsoredTransaction();
 
-  const register = async ({ name, bio, price }: RegisterParams) => {
+  const register = async ({ name, bio, xProfile, avatarBlobId, price }: RegisterParams) => {
     if (!currentAccount) {
       throw new Error("Wallet not connected");
     }
@@ -40,6 +42,8 @@ export function useRegisterCreator() {
       arguments: [
         tx.pure.string(name),
         tx.pure.string(bio),
+        tx.pure.string(xProfile),
+        tx.pure.string(avatarBlobId),
         tx.pure.u64(price),
         tx.object(CLOCK_ID),
       ],

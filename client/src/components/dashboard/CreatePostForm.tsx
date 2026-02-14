@@ -116,12 +116,7 @@ export function CreatePostForm({ onPublish }: CreatePostFormProps) {
           maxFiles={5}
         />
 
-        <Button
-          onClick={() => {
-            handleSubmit({ preventDefault: () => {} } as React.FormEvent<HTMLFormElement>);
-          }}
-          disabled={isPublishing || !isValid}
-        >
+        <Button onClick={handleSubmit} disabled={isPublishing || !isValid}>
           {isPublishing ? "Publishing..." : "Publish"}
         </Button>
       </div>
