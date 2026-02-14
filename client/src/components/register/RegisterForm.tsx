@@ -75,6 +75,11 @@ export function RegisterForm() {
       return;
     }
 
+    if (!twitterHandle.trim()) {
+      setError("X handle is required");
+      return;
+    }
+
     try {
       const priceInMist = Math.floor(priceNum * 1_000_000_000);
 
@@ -270,14 +275,13 @@ export function RegisterForm() {
           </div>
         </div>
 
-        {/* Twitter Connect */}
         <div>
           <label
             htmlFor="twitter"
             className="block text-sm font-medium mb-2"
             style={{ color: "var(--text-primary)" }}
           >
-            Twitter (optional)
+            X
           </label>
           <div className="relative">
             <span
