@@ -56,12 +56,15 @@ export function PostContent({
   const canDecrypt = (isSubscribed && subscription) || isOwnPost;
 
   useEffect(() => {
+    // For own posts, we don't need subscription
+    // For others' posts, we need isSubscribed AND subscription object
+    const hasAccess = isOwnPost || (isSubscribed && subscription);
+
     if (
-      !isSubscribed ||
+      !hasAccess ||
       !post.blobId ||
       !creator?.address ||
-      !creator?.profileId ||
-      !subscription
+      !creator?.profileId
     ) {
       setDecrypted(null);
       setDecryptError(null);
@@ -105,7 +108,7 @@ export function PostContent({
           target: TARGETS.sealApprove,
           arguments: [
             tx.pure.vector("u8", idBytes),
-            tx.object(subscription.id),
+            tx.object(subscription!.id),
             tx.object(creator.profileId!),
             tx.object(CLOCK_ID),
           ],
@@ -142,24 +145,29 @@ export function PostContent({
         } = JSON.parse(jsonString);
 
         console.log("Post Data", postData);
+        console.log("Media Files from postData:", postData.mediaFiles);
 
-        // const mediaBlobs = await Promise.all(
-        //   postData.mediaFiles.map(async (mediaBlob) => {
-        //     const bytes = await readBlobHttp(mediaBlob.blobId);
-        //     return new Blob([new Uint8Array(bytes)]);
-        //   }),
-        // );
+        // Load media files from Walrus
+        let media: PostMedia[] = [];
+        if (postData.mediaFiles && postData.mediaFiles.length > 0) {
+          const mediaBlobs = await Promise.all(
+            postData.mediaFiles.map(async (mediaFile) => {
+              const bytes = await readBlobHttp(mediaFile.blobId);
+              return new Blob([new Uint8Array(bytes)]);
+            }),
+          );
 
-        // const urls = mediaBlobs.map((blob) => URL.createObjectURL(blob));
-        // mediaUrlsRef.current = urls;
+          const urls = mediaBlobs.map((blob) => URL.createObjectURL(blob));
+          mediaUrlsRef.current = urls;
 
-        // const media: PostMedia[] = postData.mediaFiles.map((m, index) => ({
-        //   url: urls[index],
-        //   type: m.type,
-        // }));
+          media = postData.mediaFiles.map((m, index) => ({
+            url: urls[index],
+            type: m.type,
+          }));
+        }
 
         if (!cancelled) {
-          setDecrypted({ content: postData.content });
+          setDecrypted({ content: postData.content, media });
           showToast("Content decrypted", "success");
         }
       } catch (error) {

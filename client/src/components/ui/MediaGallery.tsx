@@ -27,15 +27,17 @@ export function MediaGallery({ media, blur = false }: MediaGalleryProps) {
         {media.map((item, index) => (
           <div
             key={index}
-            className={`relative aspect-video cursor-pointer overflow-hidden ${blur ? "pointer-events-none" : ""}`}
+            className={`relative cursor-pointer overflow-hidden ${blur ? "pointer-events-none" : ""} ${media.length === 1 ? "" : "aspect-video"}`}
             onClick={() => !blur && setSelectedIndex(index)}
           >
             {item.type === "image" ? (
               <Image
                 src={item.url}
                 alt={`Media ${index + 1}`}
-                fill
-                className={`object-cover transition-transform hover:scale-105 ${blur ? "blur-xl" : ""}`}
+                width={media.length === 1 ? 800 : undefined}
+                height={media.length === 1 ? 600 : undefined}
+                fill={media.length !== 1}
+                className={`${media.length === 1 ? "w-full h-auto rounded-xl" : "object-cover"} transition-transform hover:scale-105 ${blur ? "blur-xl" : ""}`}
               />
             ) : (
               <video
