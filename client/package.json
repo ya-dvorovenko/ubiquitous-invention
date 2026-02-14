@@ -11,8 +11,10 @@
   "dependencies": {
     "@mysten/dapp-kit": "^1.0.3",
     "@mysten/enoki": "^1.0.3",
+    "@mysten/seal": "^1.0.1",
     "@mysten/sui": "^2.4.0",
     "@mysten/suins": "^1.0.2",
+    "@mysten/walrus": "^1.0.3",
     "@tanstack/react-query": "^5.90.21",
     "next": "^15.1.0",
     "react": "^19.0.0",

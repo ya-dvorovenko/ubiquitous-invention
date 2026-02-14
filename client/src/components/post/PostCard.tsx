@@ -27,10 +27,7 @@ export function PostCard({ post }: PostCardProps) {
             {formatDate(post.createdAt)}
           </span>
         </div>
-        <p
-          className="text-sm"
-          style={{ color: "var(--text-secondary)" }}
-        >
+        <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
           {post.preview}
         </p>
       </Card>

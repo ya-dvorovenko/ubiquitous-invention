@@ -14,12 +14,18 @@ importers:
       '@mysten/enoki':
         specifier: ^1.0.3
         version: 1.0.3(@mysten/sui@2.4.0(typescript@5.9.3))(@types/react@19.2.14)(react@19.2.4)
+      '@mysten/seal':
+        specifier: ^1.0.1
+        version: 1.0.1(@mysten/sui@2.4.0(typescript@5.9.3))
       '@mysten/sui':
         specifier: ^2.4.0
         version: 2.4.0(typescript@5.9.3)
       '@mysten/suins':
         specifier: ^1.0.2
         version: 1.0.2(@mysten/sui@2.4.0(typescript@5.9.3))
+      '@mysten/walrus':
+        specifier: ^1.0.3
+        version: 1.0.3(@mysten/sui@2.4.0(typescript@5.9.3))
       '@tanstack/react-query':
         specifier: ^5.90.21
         version: 5.90.21(react@19.2.4)
@@ -383,6 +389,11 @@ packages:
   '@mysten/ledgerjs-hw-app-sui@0.7.1':
     resolution: {integrity: sha512-2KfPyTzdIeSq4auepS56T09rPE2dHz2VX3G9rFnYjayzynJtNd9tzKWPRpjpCEdBGjp8wg0kEzAeHSOwB0P/Kg==}
 
+  '@mysten/seal@1.0.1':
+    resolution: {integrity: sha512-7dWlJvqb5jbdq1DLwHw080/PNOat9K9Z/vGR5LqiywXA1Zdky0gvhPGm/KFSoON2qFP3YRwK1ar4olAC8EAddQ==}
+    peerDependencies:
+      '@mysten/sui': ^2.3.2
+
   '@mysten/signers@1.0.1':
     resolution: {integrity: sha512-R23Q5Nm4z4ydmGSbTcS9omw2pPA522WVwkOHiF+n0NJMm/icNlMmM7rTPzA0I6LkUDx1WE+ScEfF9knuAgc/1A==}
     engines: {node: '>=22'}
@@ -411,6 +422,14 @@ packages:
     resolution: {integrity: sha512-Q2GoXO1SPLayqunNIWI3VT8cyOVGTFAPUvaCzx7jYIEoZBfyCR5RCUS4/ehgAlApF88Y/1c/OfjBvEoeRi76jw==}
     peerDependencies:
       '@mysten/sui': '*'
+
+  '@mysten/walrus-wasm@0.2.0':
+    resolution: {integrity: sha512-QYZoS6CIoFnVxqYClXkwgeoUjnNUyPdXwoD1Re4Xo/TVdXXmpH46akodNJ+e6egUSrjzHgeiRgfAuq57sDXGNA==}
+
+  '@mysten/walrus@1.0.3':
+    resolution: {integrity: sha512-9pYIOuaCVUdLvdqQh7AUOQ72bnPEMcCYm4+m2ccm6DL30pk8nNpX6PSho0eHu7yYh2WAYC1thMq2r6pkB5IjHQ==}
+    peerDependencies:
+      '@mysten/sui': ^2.3.2
 
   '@mysten/window-wallet-core@0.1.3':
     resolution: {integrity: sha512-Y3j896R7yfJTihJtLqRZLNwF7iEssYKJjNWPv72CflF5CvYZIngHJcUNGq9Y59o7OrD3oYL+/JM1YVZVMkR/EQ==}
@@ -1351,6 +1370,9 @@ packages:
   data-view-byte-offset@1.0.1:
     resolution: {integrity: sha512-BS8PfmtDGnrgYdOonGZQdLZslWIeCGFP9tpan0hi1Co2Zr2NKADsvGYA8XxuG/4UWgJ6Cjtv+YJnB6MM69QGlQ==}
     engines: {node: '>= 0.4'}
+
+  dataloader@2.2.3:
+    resolution: {integrity: sha512-y2krtASINtPFS1rSDjacrFgn1dcUuoREVabwlOGOe4SdxenREqwjwjElAdwvbGM7kgZz9a3KVicWR7vcz8rnzA==}
 
   debug@3.2.7:
     resolution: {integrity: sha512-CFjzYYAi4ThfiQvizrFQevTTXHtnCqWfe7x1AhgEscTz6ZbLbfoLRLPugTQyBth6f8ZERVUSyWHFD/7Wu4t1XQ==}
@@ -3083,6 +3105,13 @@ snapshots:
 
   '@mysten/ledgerjs-hw-app-sui@0.7.1': {}
 
+  '@mysten/seal@1.0.1(@mysten/sui@2.4.0(typescript@5.9.3))':
+    dependencies:
+      '@mysten/bcs': 2.0.2
+      '@mysten/sui': 2.4.0(typescript@5.9.3)
+      '@noble/curves': 2.0.1
+      '@noble/hashes': 2.0.1
+
   '@mysten/signers@1.0.1(@mysten/sui@2.4.0(typescript@5.9.3))':
     dependencies:
       '@google-cloud/kms': 5.3.0
@@ -3142,6 +3171,16 @@ snapshots:
     dependencies:
       '@mysten/sui': 2.4.0(typescript@5.9.3)
       '@wallet-standard/core': 1.1.1
+
+  '@mysten/walrus-wasm@0.2.0': {}
+
+  '@mysten/walrus@1.0.3(@mysten/sui@2.4.0(typescript@5.9.3))':
+    dependencies:
+      '@mysten/bcs': 2.0.2
+      '@mysten/sui': 2.4.0(typescript@5.9.3)
+      '@mysten/utils': 0.3.1
+      '@mysten/walrus-wasm': 0.2.0
+      dataloader: 2.2.3
 
   '@mysten/window-wallet-core@0.1.3(typescript@5.9.3)':
     dependencies:
@@ -4073,6 +4112,8 @@ snapshots:
       call-bound: 1.0.4
       es-errors: 1.3.0
       is-data-view: 1.0.2
+
+  dataloader@2.2.3: {}
 
   debug@3.2.7:
     dependencies:

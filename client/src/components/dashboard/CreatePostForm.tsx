@@ -25,18 +25,20 @@ export function CreatePostForm({ onPublish }: CreatePostFormProps) {
   const [mediaFiles, setMediaFiles] = useState<MediaFile[]>([]);
   const [isPublishing, setIsPublishing] = useState(false);
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
     if (!title.trim() || !preview.trim() || !content.trim()) return;
 
     setIsPublishing(true);
 
     try {
       await onPublish({ title, preview, content, mediaFiles });
-      mediaFiles.forEach((m) => URL.revokeObjectURL(m.preview));
-      setTitle("");
-      setPreview("");
-      setContent("");
-      setMediaFiles([]);
+      // mediaFiles.forEach((m) => URL.revokeObjectURL(m.preview));
+      // setTitle("");
+      // setPreview("");
+      // setContent("");
+      // setMediaFiles([]);
     } finally {
       setIsPublishing(false);
     }
