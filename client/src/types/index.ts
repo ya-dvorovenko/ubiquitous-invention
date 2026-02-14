@@ -6,6 +6,7 @@ export interface Creator {
   subscriberCount: number;
   subscriptionPrice: number;
   profileId?: string;
+  twitter?: string;
 }
 
 export interface PostMedia {

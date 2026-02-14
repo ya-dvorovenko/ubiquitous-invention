@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRegisterCreator, useCreators } from "@/hooks";
 import { Button, Card, useToast } from "@/components/ui";
@@ -12,12 +13,39 @@ export function RegisterForm() {
   const { register, isPending } = useRegisterCreator();
   const { data: creators } = useCreators();
   const { showToast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [name, setName] = useState("");
   const [bio, setBio] = useState("");
   const [price, setPrice] = useState("");
   const [error, setError] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
+  const [avatar, setAvatar] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [twitterHandle, setTwitterHandle] = useState("");
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        setError("Avatar must be less than 2MB");
+        return;
+      }
+      setAvatar(file);
+      setAvatarPreview(URL.createObjectURL(file));
+    }
+  };
+
+  const removeAvatar = () => {
+    if (avatarPreview) {
+      URL.revokeObjectURL(avatarPreview);
+    }
+    setAvatar(null);
+    setAvatarPreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -95,6 +123,67 @@ export function RegisterForm() {
   return (
     <Card>
       <form onSubmit={handleSubmit} className="p-6 space-y-6">
+        <div className="flex flex-col items-center gap-3">
+          <div
+            className="relative w-24 h-24 rounded-full overflow-hidden cursor-pointer"
+            style={{
+              backgroundColor: "var(--bg-primary)",
+              border: "2px dashed var(--border-color)",
+            }}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            {avatarPreview ? (
+              <Image
+                src={avatarPreview}
+                alt="Avatar preview"
+                fill
+                className="object-cover"
+              />
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <svg
+                  className="w-8 h-8"
+                  style={{ color: "var(--text-secondary)" }}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                  />
+                </svg>
+              </div>
+            )}
+          </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleAvatarChange}
+            className="hidden"
+          />
+          <div className="flex items-center gap-2">
+            <span
+              className="text-sm"
+              style={{ color: "var(--text-secondary)" }}
+            >
+              {avatarPreview ? "Change avatar" : "Add avatar (optional)"}
+            </span>
+            {avatarPreview && (
+              <button
+                type="button"
+                onClick={removeAvatar}
+                className="text-sm text-red-400 hover:text-red-300"
+              >
+                Remove
+              </button>
+            )}
+          </div>
+        </div>
+
         <div>
           <label
             htmlFor="name"
@@ -178,6 +267,39 @@ export function RegisterForm() {
             >
               SUI
             </span>
+          </div>
+        </div>
+
+        {/* Twitter Connect */}
+        <div>
+          <label
+            htmlFor="twitter"
+            className="block text-sm font-medium mb-2"
+            style={{ color: "var(--text-primary)" }}
+          >
+            Twitter (optional)
+          </label>
+          <div className="relative">
+            <span
+              className="absolute left-4 top-1/2 -translate-y-1/2"
+              style={{ color: "var(--text-secondary)" }}
+            >
+              @
+            </span>
+            <input
+              id="twitter"
+              type="text"
+              value={twitterHandle}
+              onChange={(e) => setTwitterHandle(e.target.value.replace("@", ""))}
+              placeholder="username"
+              className="w-full pl-8 pr-4 py-3 rounded-lg outline-none transition-colors"
+              style={{
+                backgroundColor: "var(--bg-primary)",
+                border: "1px solid var(--border-color)",
+                color: "var(--text-primary)",
+              }}
+              disabled={isPending}
+            />
           </div>
         </div>
 
