@@ -1,20 +1,19 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   useCurrentAccount,
   useSuiClient,
-  useSignAndExecuteTransaction,
 } from "@mysten/dapp-kit";
 import { useIsCreator, useCreatorPosts, usePublishPost } from "@/hooks";
-import { WalrusFile } from "@mysten/walrus";
 import { SealClient } from "@mysten/seal";
 import { CreatePostForm } from "@/components/dashboard";
 import { PostList } from "@/components/post";
 import { PotatoLoader, useToast } from "@/components/ui";
 import { ClientWithCoreApi } from "@mysten/sui/client";
 import { PACKAGE_ID, sealObjectIds } from "@/config/constants";
-import { uploadFiles, uploadWalrusFile } from "@/sdk/walrus";
+import { uploadFilesHttp, uploadBlobHttp } from "@/sdk/walrus-http";
 
 interface MediaFile {
   file: File;
@@ -24,6 +23,7 @@ interface MediaFile {
 
 export default function DashboardPage() {
   const router = useRouter();
+  const [isPublishing, setIsPublishing] = useState(false);
   const suiClient = useSuiClient() as ClientWithCoreApi;
   const currentAccount = useCurrentAccount();
   const {
@@ -31,8 +31,6 @@ export default function DashboardPage() {
     creatorProfile,
     isLoading: isCreatorLoading,
   } = useIsCreator();
-  const { mutateAsync: signAndExecuteTransaction } =
-    useSignAndExecuteTransaction();
 
   const { data: posts, isLoading: isPostsLoading } = useCreatorPosts(
     creatorProfile?.profileId || "",
@@ -54,6 +52,7 @@ export default function DashboardPage() {
     content: string;
     mediaFiles: MediaFile[];
   }) => {
+    setIsPublishing(true);
     try {
       // TODO: Implement actual publish logic
       // 1. Upload media files to Walrus
@@ -78,14 +77,9 @@ export default function DashboardPage() {
       if (mediaFiles.length > 0) {
         const formatedMediaFiles = mediaFiles.map((mediaFile) => mediaFile.file);
 
-        const files = await uploadFiles(
-          formatedMediaFiles,
-          suiClient,
-          currentAccount,
-          signAndExecuteTransaction,
-        );
+        const files = await uploadFilesHttp(formatedMediaFiles);
 
-        listOfMediaBlobIds = files.map((file, index) => ({
+        listOfMediaBlobIds = files.map((file: { blobId: string }, index: number) => ({
           blobId: file.blobId,
           type: mediaFiles[index].type,
         }));
@@ -124,23 +118,11 @@ export default function DashboardPage() {
 
       // 3. Upload encrypted blob to Walrus
 
-      const encryptedBlobFile = WalrusFile.from({
-        contents: encryptedContent.encryptedObject,
-        identifier: "encrypted_content",
-      });
-
-      const encryptedBlob = await uploadWalrusFile(
-        [encryptedBlobFile],
-        suiClient,
-        currentAccount,
-        signAndExecuteTransaction,
-      );
-
-      const encryptedBlobId = encryptedBlob[0].blobId;
+      const encryptedBlobId = await uploadBlobHttp(encryptedContent.encryptedObject);
 
       // 4. Call publish_post() on smart contract
 
-      publishPost({
+      await publishPost({
         profileId: creatorProfile.profileId,
         title,
         preview,
@@ -148,11 +130,12 @@ export default function DashboardPage() {
         encrypted: true,
       });
 
-      await new Promise((resolve) => setTimeout(resolve, 1000));
       showToast("Post published!", "success");
     } catch (error) {
       console.log(error);
       showToast((error as Error).message, "error");
+    } finally {
+      setIsPublishing(false);
     }
   };
 
@@ -208,6 +191,14 @@ export default function DashboardPage() {
             Become a Creator
           </button>
         </div>
+      </div>
+    );
+  }
+
+  if (isPublishing) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center z-50" style={{ backgroundColor: "rgba(0, 0, 0, 0.8)" }}>
+        <PotatoLoader size="lg" text="Publishing post..." />
       </div>
     );
   }

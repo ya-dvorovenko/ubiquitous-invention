@@ -13,7 +13,7 @@ import {
   sealObjectIds,
   TARGETS,
 } from "@/config/constants";
-import { readFile } from "@/sdk/walrus";
+import { readBlobHttp } from "@/sdk/walrus-http";
 
 interface PostContentProps {
   post: Post;
@@ -75,7 +75,7 @@ export function PostContent({
         sessionKey.setPersonalMessageSignature(signature);
 
         const encryptedBlobId = post.blobId!;
-        const encryptedBlob = await readFile(encryptedBlobId, suiClient);
+        const encryptedBlob = await readBlobHttp(encryptedBlobId);
 
         const tx = new Transaction();
         tx.moveCall({
@@ -115,7 +115,7 @@ export function PostContent({
 
         const mediaBlobs = await Promise.all(
           postData.mediaFiles.map(async (mediaBlob) => {
-            const bytes = await readFile(mediaBlob.blobId, suiClient);
+            const bytes = await readBlobHttp(mediaBlob.blobId);
             return new Blob([new Uint8Array(bytes)]);
           }),
         );

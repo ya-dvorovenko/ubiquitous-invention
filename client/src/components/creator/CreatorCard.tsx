@@ -6,6 +6,7 @@ import { useCurrentAccount } from "@mysten/dapp-kit";
 import { Creator } from "@/types";
 import { Avatar, Badge } from "../ui";
 import { formatAddress, formatSui } from "@/utils/format";
+import { getWalrusUrl } from "@/sdk/walrus-http";
 import { useIsSubscribed } from "@/hooks/useSubscription";
 
 interface CreatorCardProps {
@@ -34,7 +35,11 @@ export function CreatorCard({ creator }: CreatorCardProps) {
       >
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-3">
-            <Avatar name={creator.name} size="md" />
+            <Avatar
+                name={creator.name}
+                size="md"
+                avatarUrl={creator.avatarBlobId ? getWalrusUrl(creator.avatarBlobId) : undefined}
+              />
             <div>
               <h3
                 className="font-semibold text-lg"
@@ -79,7 +84,13 @@ export function CreatorCard({ creator }: CreatorCardProps) {
           >
             {creator.subscriberCount} subscribers
           </span>
-          <Badge variant="price">{formatSui(creator.subscriptionPrice)} SUI</Badge>
+          {creator.tiers.length > 0 ? (
+            <Badge variant="price">
+              from {formatSui(Math.min(...creator.tiers.map(t => t.price)))} SUI
+            </Badge>
+          ) : (
+            <Badge variant="default">No tiers</Badge>
+          )}
         </div>
       </div>
     </Link>

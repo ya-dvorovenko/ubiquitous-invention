@@ -11,7 +11,6 @@ interface RegisterParams {
   bio: string;
   xProfile: string;
   avatarBlobId: string;
-  price: number;
 }
 
 export function useRegisterCreator() {
@@ -20,7 +19,7 @@ export function useRegisterCreator() {
   const currentAccount = useCurrentAccount();
   const { sponsorAndExecute, isPending } = useSponsoredTransaction();
 
-  const register = async ({ name, bio, xProfile, avatarBlobId, price }: RegisterParams) => {
+  const register = async ({ name, bio, xProfile, avatarBlobId }: RegisterParams) => {
     if (!currentAccount) {
       throw new Error("Wallet not connected");
     }
@@ -44,17 +43,29 @@ export function useRegisterCreator() {
         tx.pure.string(bio),
         tx.pure.string(xProfile),
         tx.pure.string(avatarBlobId),
-        tx.pure.u64(price),
         tx.object(CLOCK_ID),
       ],
     });
 
     const result = await sponsorAndExecute(tx);
 
+    // Get the newly created CreatorCap to extract profileId
+    const caps = await suiClient.getOwnedObjects({
+      owner: currentAccount.address,
+      filter: { StructType: TYPES.creatorCap },
+      options: { showContent: true },
+    });
+
+    let profileId: string | undefined;
+    if (caps.data.length > 0 && caps.data[0].data?.content?.dataType === "moveObject") {
+      const fields = caps.data[0].data.content.fields as { profile_id: string };
+      profileId = fields.profile_id;
+    }
+
     queryClient.removeQueries({ queryKey: ["creators"] });
     await queryClient.refetchQueries({ queryKey: ["creators"] });
 
-    return result;
+    return { ...result, profileId };
   };
 
   return { register, isPending };

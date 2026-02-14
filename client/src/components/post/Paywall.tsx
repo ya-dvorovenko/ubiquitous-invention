@@ -41,11 +41,15 @@ export function Paywall({ creator, isSubscribing, onSubscribe }: PaywallProps) {
         Get access to this post and all exclusive content from {creator.name}
       </p>
       <div className="flex items-center justify-center gap-4">
-        <Button onClick={onSubscribe} disabled={isSubscribing}>
-          {isSubscribing
-            ? "Subscribing..."
-            : `Subscribe (${formatSui(creator.subscriptionPrice)} SUI)`}
-        </Button>
+        {creator.tiers.length > 0 ? (
+          <Button onClick={onSubscribe} disabled={isSubscribing}>
+            {isSubscribing
+              ? "Subscribing..."
+              : `Subscribe (from ${formatSui(Math.min(...creator.tiers.map(t => t.price)))} SUI)`}
+          </Button>
+        ) : (
+          <Badge variant="default">No subscription tiers available</Badge>
+        )}
         <Badge variant="price">{creator.subscriberCount} subscribers</Badge>
       </div>
     </Card>

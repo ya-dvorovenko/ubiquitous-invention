@@ -7,6 +7,7 @@ import { TARGETS, CLOCK_ID } from "@/config/constants";
 
 interface SubscribeParams {
   profileId: string;
+  tierIndex: number;
   price: number;
 }
 
@@ -16,7 +17,7 @@ export function useSubscribe() {
   const currentAccount = useCurrentAccount();
   const { mutateAsync: signAndExecute, isPending } = useSignAndExecuteTransaction();
 
-  const subscribe = async ({ profileId, price }: SubscribeParams) => {
+  const subscribe = async ({ profileId, tierIndex, price }: SubscribeParams) => {
     if (!currentAccount) throw new Error("No wallet connected");
 
     const tx = new Transaction();
@@ -27,12 +28,11 @@ export function useSubscribe() {
       target: TARGETS.subscribe,
       arguments: [
         tx.object(profileId),
+        tx.pure.u64(tierIndex),
         paymentCoin,
         tx.object(CLOCK_ID),
       ],
     });
-
-    tx.transferObjects([paymentCoin], currentAccount.address);
 
     const result = await signAndExecute({ transaction: tx });
 

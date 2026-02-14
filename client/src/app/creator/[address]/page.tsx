@@ -29,13 +29,18 @@ export default function CreatorProfilePage() {
 
   const isOwnProfile = currentAccount?.address === address;
 
-  const handleSubscribe = async () => {
+  const handleSubscribe = async (tierIndex: number = 0) => {
     if (!creator?.profileId || !currentAccount || isOwnProfile) return;
+    if (creator.tiers.length === 0) return;
+
+    const tier = creator.tiers[tierIndex];
+    if (!tier) return;
 
     try {
       await subscribe({
         profileId: creator.profileId,
-        price: creator.subscriptionPrice,
+        tierIndex,
+        price: tier.price,
       });
       showToast(`Subscribed to ${creator.name}!`, "success");
     } catch (error) {
@@ -65,7 +70,7 @@ export default function CreatorProfilePage() {
         postsCount={posts?.length || 0}
         isSubscribed={isSubscribed || isOwnProfile}
         isSubscribing={isSubscribing}
-        onSubscribe={isOwnProfile ? undefined : handleSubscribe}
+        onSubscribe={isOwnProfile ? undefined : () => handleSubscribe(0)}
         isOwnProfile={isOwnProfile}
       />
 

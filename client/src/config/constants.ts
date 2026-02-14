@@ -8,6 +8,7 @@ export const CLOCK_ID = "0x6";
 export const TARGETS = {
   register: `${PACKAGE_ID}::creator::register`,
   publishPost: `${PACKAGE_ID}::creator::publish_post`,
+  addTier: `${PACKAGE_ID}::creator::add_tier`,
   subscribe: `${PACKAGE_ID}::subscription::subscribe`,
   assertAccess: `${PACKAGE_ID}::seal_mock::assert_access`,
   sealApprove: `${PACKAGE_ID}::seal_mock::seal_approve`,

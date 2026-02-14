@@ -1,7 +1,10 @@
+import Image from "next/image";
+
 interface AvatarProps {
   name: string;
   size?: "sm" | "md" | "lg";
   className?: string;
+  avatarUrl?: string;
 }
 
 const sizeClasses = {
@@ -10,7 +13,23 @@ const sizeClasses = {
   lg: "w-24 h-24 text-4xl",
 };
 
-export function Avatar({ name, size = "md", className = "" }: AvatarProps) {
+export function Avatar({ name, size = "md", className = "", avatarUrl }: AvatarProps) {
+  if (avatarUrl) {
+    return (
+      <div
+        className={`${sizeClasses[size]} rounded-full flex-shrink-0 overflow-hidden relative ${className}`}
+      >
+        <Image
+          src={avatarUrl}
+          alt={name}
+          fill
+          className="object-cover"
+          unoptimized
+        />
+      </div>
+    );
+  }
+
   return (
     <div
       className={`${sizeClasses[size]} rounded-full flex items-center justify-center font-bold flex-shrink-0 ${className}`}
