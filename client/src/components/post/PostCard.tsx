@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Post } from "@/types";
 import { Card } from "../ui";
+import { formatDate } from "@/utils/format";
 
 interface PostCardProps {
   post: Post;
@@ -10,7 +11,7 @@ interface PostCardProps {
 
 export function PostCard({ post }: PostCardProps) {
   return (
-    <Link href={`/post/${post.id}`}>
+    <Link href={`/post/${post.profileId}_${post.id}`}>
       <Card hoverable>
         <div className="flex items-start justify-between mb-2">
           <h3
@@ -23,7 +24,7 @@ export function PostCard({ post }: PostCardProps) {
             className="text-sm flex-shrink-0 ml-4"
             style={{ color: "var(--text-secondary)" }}
           >
-            {post.createdAt}
+            {formatDate(post.createdAt)}
           </span>
         </div>
         <p

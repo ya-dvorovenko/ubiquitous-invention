@@ -6,12 +6,12 @@ import {
   useSuiClient,
   useSignAndExecuteTransaction,
 } from "@mysten/dapp-kit";
-import { useIsCreator, useCreatorPosts } from "@/hooks";
+import { useIsCreator, useCreatorPosts, usePublishPost } from "@/hooks";
 import { WalrusClient, WalrusFile } from "@mysten/walrus";
 import { SealClient, SessionKey } from "@mysten/seal";
 import { CreatePostForm } from "@/components/dashboard";
 import { PostList } from "@/components/post";
-import { PotatoLoader } from "@/components/ui";
+import { PotatoLoader, useToast } from "@/components/ui";
 import { ClientWithCoreApi } from "@mysten/sui/client";
 import { CLOCK_ID, sealObjectIds, TARGETS } from "@/config/constants";
 import { Transaction } from "@mysten/sui/transactions";

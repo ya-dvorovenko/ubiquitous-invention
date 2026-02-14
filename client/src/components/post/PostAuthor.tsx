@@ -12,24 +12,26 @@ interface PostAuthorProps {
 
 export function PostAuthor({ creator, date }: PostAuthorProps) {
   return (
-    <div className="flex items-center gap-4 mb-8">
+    <div className="flex items-center gap-3 mb-8">
       <Link
         href={`/creator/${creator.address}`}
-        className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+        className="hover:opacity-80 transition-opacity"
       >
-        <Avatar name={creator.name} size="sm" />
-        <div>
+        <Avatar name={creator.name} size="md" />
+      </Link>
+      <div>
+        <Link
+          href={`/creator/${creator.address}`}
+          className="hover:opacity-80 transition-opacity"
+        >
           <p className="font-medium" style={{ color: "var(--text-primary)" }}>
             {creator.name}
           </p>
-          <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
-            {formatAddress(creator.address)}
-          </p>
-        </div>
-      </Link>
-      <span className="text-sm" style={{ color: "var(--text-secondary)" }}>
-        {formatDate(date)}
-      </span>
+        </Link>
+        <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
+          {formatAddress(creator.address)} • {formatDate(date)}
+        </p>
+      </div>
     </div>
   );
 }

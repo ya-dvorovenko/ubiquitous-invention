@@ -5,31 +5,32 @@ export interface Creator {
   bio: string;
   subscriberCount: number;
   subscriptionPrice: number;
-  profileId?: string; // On-chain CreatorProfile object ID
+  profileId?: string;
 }
 
 export interface PostMedia {
   url: string;
   type: "image" | "video";
-  blobId?: string; // Walrus blob ID
+  blobId?: string;
 }
 
 export interface Post {
   id: string;
+  profileId: string;
   creatorAddress: string;
   title: string;
   preview: string;
-  previewMedia?: PostMedia[]; // Public preview media
-  content?: string; // Only available for subscribers
-  media?: PostMedia[]; // Exclusive media for subscribers
+  previewMedia?: PostMedia[];
+  content?: string;
+  media?: PostMedia[];
   createdAt: string;
-  blobId?: string; // Walrus blob ID for encrypted content
+  blobId?: string;
   encrypted?: boolean;
 }
 
 export interface Subscription {
-  id: string; // On-chain Subscription object ID
-  profileId: string; // CreatorProfile ID
+  id: string;
+  profileId: string;
   subscriberAddress: string;
   expiresAt: string;
   createdAt?: string;
