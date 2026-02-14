@@ -56,8 +56,31 @@ export default function DashboardPage() {
   }
 
   if (!isCreator) {
-    router.push("/register");
-    return null;
+    return (
+      <div className="page-container py-8">
+        <div className="text-center">
+          <h1
+            className="text-2xl font-bold mb-4"
+            style={{ color: "var(--text-primary)" }}
+          >
+            Creator Dashboard
+          </h1>
+          <p style={{ color: "var(--text-secondary)" }} className="mb-4">
+            You need to be a creator to access this page.
+          </p>
+          <button
+            onClick={() => router.push("/register")}
+            className="px-4 py-2 rounded-lg"
+            style={{
+              backgroundColor: "var(--accent-primary)",
+              color: "var(--text-on-accent)",
+            }}
+          >
+            Become a Creator
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
