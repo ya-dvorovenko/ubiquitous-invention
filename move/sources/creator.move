@@ -62,6 +62,12 @@ public struct CreatorRegistered has copy, drop {
     name: String,
 }
 
+public struct TierAdded has copy, drop {
+    profile_id: ID,
+    duration_ms: u64,
+    price: u64,
+}
+
 fun init(otw: CREATOR, ctx: &mut TxContext) {
     let publisher = package::claim(otw, ctx);
 
@@ -148,6 +154,11 @@ entry fun add_tier(
 ) {
     assert!(cap.profile_id == object::id(profile), EWrongProfile);
     profile.tiers.push_back(SubscriptionTier { duration_ms, price });
+    event::emit(TierAdded {
+        profile_id: object::id(profile),
+        duration_ms,
+        price,
+    });
 }
 
 public(package) fun tier(p: &CreatorProfile, i: u64): (u64, u64) {

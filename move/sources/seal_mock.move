@@ -1,3 +1,4 @@
+#[allow(unused_use)]
 module suipatron::seal_mock;
 
 use sui::clock::Clock;
