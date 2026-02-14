@@ -64,6 +64,7 @@ async function fetchCreatorPosts(
       const postData = node.value.json;
       posts.push({
         id: postData.post_id,
+        profileId,
         creatorAddress,
         title: postData.title,
         preview: postData.preview,

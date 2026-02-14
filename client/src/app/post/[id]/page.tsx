@@ -1,7 +1,12 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { useCreatorPosts, useCreatorByProfileId, useIsSubscribed } from "@/hooks";
+import { useCurrentAccount } from "@mysten/dapp-kit";
+import {
+  useCreatorPosts,
+  useCreatorByProfileId,
+  useIsSubscribed,
+} from "@/hooks";
 import { BackLink, NotFound } from "@/components/common";
 import { PostAuthor, PostContent } from "@/components/post";
 import { PotatoLoader } from "@/components/ui";
@@ -9,17 +14,22 @@ import { PotatoLoader } from "@/components/ui";
 export default function PostViewPage() {
   const params = useParams();
   const postId = params.id as string;
+  const currentAccount = useCurrentAccount();
 
   const [profileId, postIndex] = postId.includes("_")
     ? postId.split("_")
     : [postId, "0"];
 
-  const { data: creator, isLoading: isCreatorLoading } = useCreatorByProfileId(profileId);
+  const { data: creator, isLoading: isCreatorLoading } =
+    useCreatorByProfileId(profileId);
   const { data: posts, isLoading: isPostsLoading } = useCreatorPosts(
     profileId,
-    creator?.address || ""
+    creator?.address || "",
   );
-  const { isSubscribed } = useIsSubscribed(profileId);
+
+  const { subscription, isSubscribed } = useIsSubscribed(profileId);
+
+  const isOwnPost = currentAccount?.address === creator?.address;
 
   const isLoading = isCreatorLoading || isPostsLoading;
 
@@ -58,7 +68,8 @@ export default function PostViewPage() {
         <PostContent
           post={post}
           creator={creator}
-          isSubscribed={isSubscribed}
+          isSubscribed={isSubscribed || isOwnPost}
+          subscription={subscription}
         />
       </article>
     </div>

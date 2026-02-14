@@ -2,7 +2,7 @@
 
 import { Transaction } from "@mysten/sui/transactions";
 import { useQueryClient } from "@tanstack/react-query";
-import { useSignAndExecuteTransaction, useSuiClient } from "@mysten/dapp-kit";
+import { useSignAndExecuteTransaction, useSuiClient, useCurrentAccount } from "@mysten/dapp-kit";
 import { TARGETS, CLOCK_ID } from "@/config/constants";
 
 interface SubscribeParams {
@@ -13,9 +13,12 @@ interface SubscribeParams {
 export function useSubscribe() {
   const queryClient = useQueryClient();
   const suiClient = useSuiClient();
+  const currentAccount = useCurrentAccount();
   const { mutateAsync: signAndExecute, isPending } = useSignAndExecuteTransaction();
 
   const subscribe = async ({ profileId, price }: SubscribeParams) => {
+    if (!currentAccount) throw new Error("No wallet connected");
+
     const tx = new Transaction();
 
     const [paymentCoin] = tx.splitCoins(tx.gas, [price]);
@@ -28,6 +31,8 @@ export function useSubscribe() {
         tx.object(CLOCK_ID),
       ],
     });
+
+    tx.transferObjects([paymentCoin], currentAccount.address);
 
     const result = await signAndExecute({ transaction: tx });
 
