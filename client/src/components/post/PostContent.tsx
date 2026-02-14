@@ -5,7 +5,6 @@ import { SealClient, SessionKey } from "@mysten/seal";
 import {
   useSuiClient,
   useSignPersonalMessage,
-  useSignAndExecuteTransaction,
   useCurrentAccount,
 } from "@mysten/dapp-kit";
 import { Transaction } from "@mysten/sui/transactions";
@@ -19,7 +18,7 @@ import {
   TARGETS,
 } from "@/config/constants";
 import { readBlobHttp } from "@/sdk/walrus-http";
-import { fromHex, toHex } from "@mysten/sui/utils";
+import { fromHex } from "@mysten/sui/utils";
 import { bcs } from "@mysten/sui/bcs";
 
 interface PostContentProps {
@@ -46,9 +45,6 @@ export function PostContent({
 }: PostContentProps) {
   const suiClient = useSuiClient();
   const { mutateAsync: signPersonalMessage } = useSignPersonalMessage();
-  const { mutateAsync: signAndExecuteTransaction } =
-    useSignAndExecuteTransaction();
-
   const currentAccount = useCurrentAccount();
   const { showToast } = useToast();
 
@@ -98,14 +94,12 @@ export function PostContent({
 
         console.log("Encrypted Blob", encryptedBlob);
 
+        // Build the seal_approve transaction (not execute - just build for Seal verification)
         const tx = new Transaction();
 
-        console.log("Before TX call");
-
         const profileIdBytes = fromHex(creator.profileId!);
-        const nonce = new Uint8Array(8).fill(0); // ТОТ ЖЕ САМЫЙ nonce, что при шифровании
+        const nonce = new Uint8Array(8).fill(0); // Same nonce as used during encryption
         const idBytes = new Uint8Array([...profileIdBytes, ...nonce]);
-        const idHex = toHex(idBytes);
 
         tx.moveCall({
           target: TARGETS.sealApprove,
@@ -117,15 +111,10 @@ export function PostContent({
           ],
         });
 
-        console.log("After TX call");
+        // Build transaction bytes for Seal (onlyTransactionKind: true)
+        const txBytes = await tx.build({ client: suiClient, onlyTransactionKind: true });
 
-        const result = await signAndExecuteTransaction({
-          transaction: tx,
-        });
-
-        const executedTxBytes = new Uint8Array(new Buffer(result.bytes));
-
-        console.log("Result", result);
+        console.log("Built TX bytes for Seal decryption");
 
         const sealClient = new SealClient({
           suiClient,
@@ -139,7 +128,7 @@ export function PostContent({
         const decryptedBytes = await sealClient.decrypt({
           data: encryptedBlob,
           sessionKey,
-          txBytes: executedTxBytes,
+          txBytes,
         });
 
         console.log("Decrypted Bytes", decryptedBytes);
