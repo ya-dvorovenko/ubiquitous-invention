@@ -18,13 +18,19 @@ export function PostContent({
   onSubscribe,
 }: PostContentProps) {
   if (isSubscribed) {
+    // TODO: When Walrus is integrated, fetch content from blobId
+    // For now, blobId contains the actual content text
+    const content = post.content || post.blobId;
+
     return (
       <div className="flex flex-col gap-6">
         {post.media && post.media.length > 0 && (
           <MediaGallery media={post.media} />
         )}
         <Card>
-          <div style={{ color: "var(--text-primary)" }}>{post.content}</div>
+          <div style={{ color: "var(--text-primary)", whiteSpace: "pre-wrap" }}>
+            {content}
+          </div>
         </Card>
       </div>
     );

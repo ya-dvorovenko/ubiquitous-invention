@@ -2,10 +2,10 @@
 
 import { useRouter } from "next/navigation";
 import { useCurrentAccount } from "@mysten/dapp-kit";
-import { useIsCreator, useCreatorPosts } from "@/hooks";
+import { useIsCreator, useCreatorPosts, usePublishPost } from "@/hooks";
 import { CreatePostForm } from "@/components/dashboard";
 import { PostList } from "@/components/post";
-import { PotatoLoader } from "@/components/ui";
+import { PotatoLoader, useToast } from "@/components/ui";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -15,16 +15,35 @@ export default function DashboardPage() {
     creatorProfile?.profileId || "",
     creatorProfile?.address || ""
   );
+  const { publishPost } = usePublishPost();
+  const { showToast } = useToast();
 
-  const handlePublish = async () => {
-    // TODO: Implement actual publish logic
-    // 1. Upload media files to Walrus
-    // 2. Encrypt content + media references with Seal
-    // 3. Upload encrypted blob to Walrus
-    // 4. Call publish_post() on smart contract
+  const handlePublish = async (data: {
+    title: string;
+    preview: string;
+    content: string;
+  }) => {
+    if (!creatorProfile?.profileId) {
+      showToast("Profile not found", "error");
+      return;
+    }
 
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    alert("Post published! (mock)");
+    try {
+      await publishPost({
+        profileId: creatorProfile.profileId,
+        title: data.title,
+        preview: data.preview,
+        blobId: data.content, // TODO: Replace with actual Walrus blob ID
+        encrypted: true,
+      });
+
+      showToast("Post published successfully!", "success");
+    } catch (error) {
+      showToast(
+        error instanceof Error ? error.message : "Failed to publish post",
+        "error"
+      );
+    }
   };
 
   if (!currentAccount) {
