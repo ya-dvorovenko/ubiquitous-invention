@@ -4,16 +4,27 @@ import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useQueryClient } from "@tanstack/react-query";
+import {
+  useCurrentAccount,
+  useSuiClient,
+  useSignAndExecuteTransaction,
+} from "@mysten/dapp-kit";
 import { useRegisterCreator, useCreators } from "@/hooks";
 import { Button, Card, useToast } from "@/components/ui";
+import { uploadFiles } from "@/sdk/walrus";
 
 export function RegisterForm() {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const suiClient = useSuiClient();
+  const currentAccount = useCurrentAccount();
+  const { mutateAsync: signAndExecuteTransaction } =
+    useSignAndExecuteTransaction();
   const { register, isPending } = useRegisterCreator();
   const { data: creators } = useCreators();
   const { showToast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   const [name, setName] = useState("");
   const [bio, setBio] = useState("");
@@ -83,15 +94,32 @@ export function RegisterForm() {
     try {
       const priceInMist = Math.floor(priceNum * 1_000_000_000);
 
+      let avatarBlobId = "";
+
+      if (avatar && currentAccount) {
+        setIsUploading(true);
+        const uploadedFiles = await uploadFiles(
+          [avatar],
+          suiClient,
+          currentAccount,
+          signAndExecuteTransaction
+        );
+        avatarBlobId = uploadedFiles[0]?.blobId || "";
+        setIsUploading(false);
+      }
+
       await register({
         name: name.trim(),
         bio: bio.trim(),
+        xProfile: twitterHandle.trim(),
+        avatarBlobId,
         price: priceInMist,
       });
 
       showToast("You're now a creator!", "success");
       setIsSuccess(true);
     } catch (err) {
+      setIsUploading(false);
       showToast(err instanceof Error ? err.message : "Registration failed", "error");
       setError(err instanceof Error ? err.message : "Registration failed");
     }
@@ -309,8 +337,8 @@ export function RegisterForm() {
 
         {error && <p className="text-red-500 text-sm">{error}</p>}
 
-        <Button type="submit" disabled={isPending} className="w-full">
-          {isPending ? "Registering..." : "Register as Creator"}
+        <Button type="submit" disabled={isPending || isUploading} className="w-full">
+          {isUploading ? "Uploading avatar..." : isPending ? "Registering..." : "Register as Creator"}
         </Button>
       </form>
     </Card>

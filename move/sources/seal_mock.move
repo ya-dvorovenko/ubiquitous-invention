@@ -64,6 +64,7 @@ fun test_full_flow() {
     suipatron::creator::register(
         b"TestCreator".to_string(),
         b"Test bio".to_string(),
+        b"@testcreator".to_string(),
         b"".to_string(),
         &clock,
         ts.ctx(),
@@ -120,6 +121,7 @@ fun test_assert_access_wrong_profile() {
     suipatron::creator::register(
         b"Creator1".to_string(),
         b"Bio".to_string(),
+        b"@testcreator".to_string(),
         b"".to_string(),
         &clock,
         ts.ctx(),
@@ -162,6 +164,7 @@ fun test_assert_access_expired() {
     suipatron::creator::register(
         b"Creator1".to_string(),
         b"Bio".to_string(),
+        b"@testcreator".to_string(),
         b"".to_string(),
         &clock,
         ts.ctx(),
@@ -208,6 +211,7 @@ fun test_seal_approve_success() {
     suipatron::creator::register(
         b"Creator1".to_string(),
         b"Bio".to_string(),
+        b"@testcreator".to_string(),
         b"".to_string(),
         &clock,
         ts.ctx(),
@@ -257,6 +261,7 @@ fun test_seal_approve_wrong_profile() {
     suipatron::creator::register(
         b"Creator1".to_string(),
         b"Bio".to_string(),
+        b"@testcreator".to_string(),
         b"".to_string(),
         &clock,
         ts.ctx(),
@@ -275,6 +280,7 @@ fun test_seal_approve_wrong_profile() {
     suipatron::creator::register(
         b"Creator2".to_string(),
         b"Bio2".to_string(),
+        b"@creator2".to_string(),
         b"".to_string(),
         &clock,
         ts.ctx(),
@@ -323,6 +329,7 @@ fun test_seal_approve_expired() {
     suipatron::creator::register(
         b"Creator1".to_string(),
         b"Bio".to_string(),
+        b"@testcreator".to_string(),
         b"".to_string(),
         &clock,
         ts.ctx(),
@@ -372,6 +379,7 @@ fun test_seal_approve_wrong_id_prefix() {
     suipatron::creator::register(
         b"Creator1".to_string(),
         b"Bio".to_string(),
+        b"@testcreator".to_string(),
         b"".to_string(),
         &clock,
         ts.ctx(),
