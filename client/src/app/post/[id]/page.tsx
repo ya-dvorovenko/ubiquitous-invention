@@ -1,11 +1,21 @@
 "use client";
 
+import { useEffect } from "react";
 import { useParams } from "next/navigation";
 import { useCurrentAccount } from "@mysten/dapp-kit";
-import { useCreatorPosts, useCreatorByProfileId, useIsSubscribed } from "@/hooks";
+import { SealClient, SessionKey } from "@mysten/seal";
+import { useSuiClient, useSignPersonalMessage } from "@mysten/dapp-kit";
+import {
+  useCreatorPosts,
+  useCreatorByProfileId,
+  useIsSubscribed,
+} from "@/hooks";
 import { BackLink, NotFound } from "@/components/common";
 import { PostAuthor, PostContent } from "@/components/post";
 import { PotatoLoader } from "@/components/ui";
+import { PACKAGE_ID, sealObjectIds, TARGETS } from "@/config/constants";
+import { Transaction } from "@mysten/sui/transactions";
+import { WalrusClient } from "@mysten/walrus";
 
 export default function PostViewPage() {
   const params = useParams();
@@ -16,16 +26,94 @@ export default function PostViewPage() {
     ? postId.split("_")
     : [postId, "0"];
 
-  const { data: creator, isLoading: isCreatorLoading } = useCreatorByProfileId(profileId);
+  const { data: creator, isLoading: isCreatorLoading } =
+    useCreatorByProfileId(profileId);
   const { data: posts, isLoading: isPostsLoading } = useCreatorPosts(
     profileId,
-    creator?.address || ""
+    creator?.address || "",
   );
   const { isSubscribed } = useIsSubscribed(profileId);
 
   const isOwnPost = currentAccount?.address === creator?.address;
 
   const isLoading = isCreatorLoading || isPostsLoading;
+
+  const suiClient = useSuiClient();
+
+  const { mutateAsync: signPersonalMessage } = useSignPersonalMessage();
+
+  const handleSignMessage = async () => {
+    if (!creator?.address) return;
+
+    const sessionKey = await SessionKey.create({
+      address: creator?.address,
+      packageId: PACKAGE_ID,
+      ttlMin: 10,
+      suiClient,
+    });
+
+    if (!sessionKey.isExpired()) {
+      return null;
+    }
+
+    const message = await sessionKey.getPersonalMessage();
+
+    const { signature } = await signPersonalMessage({
+      message,
+    });
+
+    sessionKey.setPersonalMessageSignature(signature);
+
+    // Decrypt process
+
+    const encryptedBlobId = post?.blobId;
+
+    if (!encryptedBlobId) {
+      throw new Error("No blob here");
+    }
+
+    const walrusClient = new WalrusClient({
+      suiClient: suiClient,
+      network: "testnet",
+    });
+
+    const encryptedBlob = await walrusClient.readBlob({
+      blobId: encryptedBlobId,
+    });
+
+    const blob = new Blob([new Uint8Array(encryptedBlob)]);
+
+    const textDecoder = new TextDecoder("utf-8");
+    const mainBlobId = textDecoder.decode(await blob.arrayBuffer());
+
+    const tx = new Transaction();
+    tx.moveCall({
+      target: TARGETS.sealApprove,
+    });
+
+    const txBytes = tx.build({ client: suiClient, onlyTransactionKind: true });
+
+    const sealClient = new SealClient({
+      suiClient: suiClient,
+      serverConfigs: sealObjectIds.map((id) => {
+        return {
+          objectId: id,
+          weight: 1,
+        };
+      }),
+      verifyKeyServers: false,
+    });
+
+    // const decryptedBytes = await sealClient.decrypt({
+    //   data: encryptedBytes,
+    //   sessionKey,
+    //   txBytes,
+    // });
+  };
+
+  useEffect(() => {
+    handleSignMessage();
+  }, [creator?.address]);
 
   if (isLoading) {
     return (

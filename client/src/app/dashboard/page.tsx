@@ -8,12 +8,17 @@ import {
 } from "@mysten/dapp-kit";
 import { useIsCreator, useCreatorPosts, usePublishPost } from "@/hooks";
 import { WalrusClient, WalrusFile } from "@mysten/walrus";
-import { SealClient, SessionKey } from "@mysten/seal";
+import { SealClient } from "@mysten/seal";
 import { CreatePostForm } from "@/components/dashboard";
 import { PostList } from "@/components/post";
 import { PotatoLoader, useToast } from "@/components/ui";
 import { ClientWithCoreApi } from "@mysten/sui/client";
-import { CLOCK_ID, sealObjectIds, TARGETS } from "@/config/constants";
+import {
+  CLOCK_ID,
+  PACKAGE_ID,
+  sealObjectIds,
+  TARGETS,
+} from "@/config/constants";
 import { Transaction } from "@mysten/sui/transactions";
 
 interface MediaFile {
@@ -39,6 +44,10 @@ export default function DashboardPage() {
     creatorProfile?.address || "",
   );
 
+  const { publishPost } = usePublishPost();
+
+  const { showToast } = useToast();
+
   const handlePublish = async ({
     title,
     preview,
@@ -53,6 +62,10 @@ export default function DashboardPage() {
     try {
       // TODO: Implement actual publish logic
       // 1. Upload media files to Walrus
+      if (!creatorProfile?.profileId) {
+        throw new Error("No creator profile found");
+      }
+
       if (!currentAccount) {
         throw new Error("No account connected");
       }
@@ -143,8 +156,8 @@ export default function DashboardPage() {
       const encryptedContent = await sealClient.encrypt({
         data: dataToEncrypt,
         threshold: 2,
-        packageId: TARGETS.assertAccess,
-        id: "1",
+        packageId: PACKAGE_ID,
+        id: "123", // todo: change it in the future, for now it's just a placeholder
       });
 
       // 3. Upload encrypted blob to Walrus
@@ -183,25 +196,19 @@ export default function DashboardPage() {
 
       // 4. Call publish_post() on smart contract
 
-      const transaction = new Transaction();
-
-      transaction.moveCall({
-        target: TARGETS.publishPost,
-        arguments: [
-          // todo: find profile id, which is owned by currentAccount
-          // transaction.object(profileId)
-          transaction.pure.string(title),
-          transaction.pure.string(preview),
-          transaction.pure.string(encryptedBlobId),
-          transaction.pure.bool(true),
-          transaction.object(CLOCK_ID),
-        ],
+      publishPost({
+        profileId: creatorProfile.profileId,
+        title,
+        preview,
+        blobId: encryptedBlobId,
+        encrypted: true,
       });
 
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      // alert("Post published! (mock)");
+      await new Promise((resolve) => setTimeout(resolve 1000));
+      showToast("Post published!", "success");
     } catch (error) {
       console.log(error);
+      showToast((error as Error).message, "error");
     }
   };
 
