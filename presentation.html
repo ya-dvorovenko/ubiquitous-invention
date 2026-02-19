@@ -1,0 +1,1276 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SuiPatron - Presentation</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        --bg-primary: #0a0a0a;
+        --bg-secondary: #141414;
+        --bg-card: #1a1a1a;
+        --text-primary: #ffffff;
+        --text-secondary: #a0a0a0;
+        --accent: #f5a623;
+        --accent-hover: #d4910f;
+        --border-color: #2a2a2a;
+        --gradient-start: #f5a623;
+        --gradient-end: #e8940c;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
+          sans-serif;
+        background-color: var(--bg-primary);
+        color: var(--text-primary);
+        scroll-behavior: smooth;
+        overflow-x: hidden;
+      }
+
+      .slide {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 60px 40px;
+        position: relative;
+      }
+
+      .slide::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 100px;
+        height: 4px;
+        background: linear-gradient(
+          90deg,
+          var(--gradient-start),
+          var(--gradient-end)
+        );
+        border-radius: 2px;
+      }
+
+      .slide-number {
+        position: absolute;
+        top: 30px;
+        right: 40px;
+        color: var(--text-secondary);
+        font-size: 14px;
+      }
+
+      h1 {
+        font-size: 4rem;
+        font-weight: 700;
+        margin-bottom: 20px;
+        text-align: center;
+      }
+
+      h2 {
+        font-size: 3rem;
+        font-weight: 600;
+        margin-bottom: 40px;
+        text-align: center;
+      }
+
+      .subtitle {
+        font-size: 1.5rem;
+        color: var(--text-secondary);
+        text-align: center;
+        max-width: 600px;
+      }
+
+      .logo {
+        width: 120px;
+        height: 120px;
+        background: linear-gradient(
+          135deg,
+          var(--gradient-start),
+          var(--gradient-end)
+        );
+        border-radius: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 40px;
+        box-shadow: 0 20px 60px rgba(245, 166, 35, 0.3);
+      }
+
+      .logo svg {
+        width: 60px;
+        height: 60px;
+      }
+
+      /* Architecture Slide */
+      .architecture-container {
+        display: grid;
+        grid-template-columns: 1fr 1.2fr 1fr;
+        gap: 40px;
+        max-width: 1400px;
+        width: 100%;
+        margin-top: 20px;
+      }
+
+      .arch-section {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      .arch-section-title {
+        text-align: center;
+        color: var(--text-secondary);
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 10px;
+      }
+
+      .arch-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 24px;
+      }
+
+      .arch-card.external {
+        border-color: #3a3a4a;
+      }
+
+      .arch-card.blockchain {
+        border-color: #8b4513;
+        background: linear-gradient(
+          135deg,
+          rgba(139, 69, 19, 0.1),
+          transparent
+        );
+      }
+
+      .arch-card.shared {
+        border-color: #90ee90;
+        background: linear-gradient(
+          135deg,
+          rgba(144, 238, 144, 0.05),
+          transparent
+        );
+      }
+
+      .arch-card.owned {
+        border-color: #ffd700;
+        background: linear-gradient(
+          135deg,
+          rgba(255, 215, 0, 0.05),
+          transparent
+        );
+      }
+
+      .arch-card-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+
+      .arch-card-icon {
+        font-size: 20px;
+      }
+
+      .arch-card-title {
+        font-weight: 600;
+        font-size: 18px;
+      }
+
+      .arch-card-label {
+        font-size: 12px;
+        padding: 2px 8px;
+        border-radius: 4px;
+        margin-bottom: 8px;
+        display: inline-block;
+      }
+
+      .arch-card-label.shared {
+        background: rgba(144, 238, 144, 0.2);
+        color: #90ee90;
+      }
+      .arch-card-label.owned {
+        background: rgba(255, 215, 0, 0.2);
+        color: #ffd700;
+      }
+
+      .arch-card-item {
+        color: var(--text-secondary);
+        font-size: 14px;
+        margin: 6px 0;
+      }
+
+      .inner-card {
+        background: var(--bg-secondary);
+        border-radius: 12px;
+        padding: 16px;
+        margin-top: 12px;
+      }
+
+      /* Data Flow */
+      .data-flow {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+        max-width: 1200px;
+        width: 100%;
+        margin-top: 40px;
+      }
+
+      .flow-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 20px;
+      }
+
+      .flow-card-title {
+        color: var(--accent);
+        font-size: 14px;
+        margin-bottom: 8px;
+      }
+
+      .flow-card-content {
+        color: var(--text-secondary);
+        font-size: 14px;
+      }
+
+      /* Patterns Grid */
+      .patterns-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+        max-width: 800px;
+        width: 100%;
+        margin-top: 20px;
+      }
+
+      .pattern-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 24px 32px;
+        text-align: center;
+        font-size: 18px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+      }
+
+      .pattern-card:hover {
+        border-color: var(--accent);
+        transform: translateY(-4px);
+      }
+
+      /* Integrations */
+      .integrations-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 40px;
+        margin-top: 40px;
+      }
+
+      .integration-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .integration-logo {
+        width: 120px;
+        height: 120px;
+        border-radius: 20px;
+        border: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        background: var(--bg-card);
+      }
+
+      .integration-logo img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .integration-name {
+        color: var(--text-secondary);
+        font-size: 16px;
+      }
+
+      /* GraphQL Slide */
+      .graphql-content {
+        max-width: 1000px;
+        width: 100%;
+        margin-top: 30px;
+      }
+
+      .graphql-reason {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 30px;
+        margin-bottom: 30px;
+      }
+
+      .graphql-reason h3 {
+        color: var(--accent);
+        margin-bottom: 16px;
+        font-size: 20px;
+      }
+
+      .graphql-reason p {
+        color: var(--text-secondary);
+        line-height: 1.8;
+        font-size: 16px;
+      }
+
+      .code-block {
+        background: #0d1117;
+        border-radius: 12px;
+        padding: 24px;
+        font-family: "Monaco", "Menlo", monospace;
+        font-size: 14px;
+        overflow-x: auto;
+        border: 1px solid #30363d;
+      }
+
+      .code-keyword {
+        color: #ff7b72;
+      }
+      .code-string {
+        color: #a5d6ff;
+      }
+      .code-field {
+        color: #79c0ff;
+      }
+
+      /* Demo Slide */
+      .demo-screenshot {
+        max-width: 1100px;
+        width: 100%;
+        border-radius: 16px;
+        border: 1px solid var(--border-color);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        margin-top: 30px;
+      }
+
+      /* Team Slide */
+      .team-info {
+        text-align: center;
+        margin-top: 40px;
+      }
+
+      .team-name {
+        font-size: 2rem;
+        color: var(--accent);
+        margin-bottom: 20px;
+      }
+
+      .links {
+        display: flex;
+        gap: 30px;
+        margin-top: 40px;
+      }
+
+      .link-btn {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 16px 32px;
+        color: var(--text-primary);
+        text-decoration: none;
+        font-size: 16px;
+        transition: all 0.3s ease;
+      }
+
+      .link-btn:hover {
+        border-color: var(--accent);
+        background: rgba(245, 166, 35, 0.1);
+      }
+
+      /* Navigation */
+      .nav-dots {
+        position: fixed;
+        right: 30px;
+        top: 50%;
+        transform: translateY(-50%);
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        z-index: 100;
+      }
+
+      .nav-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: var(--border-color);
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .nav-dot:hover,
+      .nav-dot.active {
+        background: var(--accent);
+        transform: scale(1.2);
+      }
+
+      /* Scroll indicator */
+      .scroll-indicator {
+        position: absolute;
+        bottom: 40px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        color: var(--text-secondary);
+        font-size: 12px;
+        animation: bounce 2s infinite;
+      }
+
+      @keyframes bounce {
+        0%,
+        20%,
+        50%,
+        80%,
+        100% {
+          transform: translateX(-50%) translateY(0);
+        }
+        40% {
+          transform: translateX(-50%) translateY(-10px);
+        }
+        60% {
+          transform: translateX(-50%) translateY(-5px);
+        }
+      }
+
+      .scroll-indicator svg {
+        width: 24px;
+        height: 24px;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Navigation Dots -->
+    <nav class="nav-dots">
+      <a href="#slide1" class="nav-dot active"></a>
+      <a href="#slide2" class="nav-dot"></a>
+      <a href="#slide3" class="nav-dot"></a>
+      <a href="#slide4" class="nav-dot"></a>
+      <a href="#slide5" class="nav-dot"></a>
+      <a href="#slide6" class="nav-dot"></a>
+      <a href="#slide7" class="nav-dot"></a>
+      <a href="#slide8" class="nav-dot"></a>
+      <a href="#slide9" class="nav-dot"></a>
+    </nav>
+
+    <!-- Slide 1: Title -->
+    <section class="slide" id="slide1">
+      <span class="slide-number">1 / 9</span>
+      <div
+        class="logo"
+        style="
+          background: transparent;
+          box-shadow: none;
+          width: 240px;
+          height: 240px;
+        "
+      >
+        <img
+          src="client/public/potato.webp"
+          alt="SuiPatron Logo"
+          style="width: 240px; height: 240px; object-fit: contain"
+        />
+      </div>
+      <h1>SuiPatron</h1>
+      <p class="subtitle">
+        Decentralized subscription platform on Sui blockchain with encrypted
+        content delivery via Walrus & Seal
+      </p>
+      <p
+        style="
+          font-size: 2rem;
+          font-weight: 700;
+          margin-top: 20px;
+          background: linear-gradient(90deg, #f5a623, #e8940c, #d4910f);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        "
+      >
+        Built with creativity and detailed flows
+      </p>
+      <div class="scroll-indicator">
+        <span>Scroll down</span>
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <path d="M7 13l5 5 5-5M7 6l5 5 5-5" />
+        </svg>
+      </div>
+    </section>
+
+    <!-- Slide 2: Mascot -->
+    <section
+      class="slide"
+      id="slide2"
+      style="height: auto; min-height: 100vh; padding: 60px 40px"
+    >
+      <span class="slide-number">2 / 9</span>
+      <h2>Meet Hot Potato!</h2>
+      <p class="subtitle" style="margin-bottom: 20px">
+        Our mascot in different moods
+      </p>
+      <div
+        style="
+          background: var(--bg-card);
+          border-radius: 16px;
+          padding: 24px 40px;
+          margin-bottom: 40px;
+          max-width: 800px;
+        "
+      >
+        <p
+          style="
+            color: var(--text-secondary);
+            font-size: 18px;
+            line-height: 1.6;
+            text-align: center;
+          "
+        >
+          <span style="color: var(--accent); font-weight: 600"
+            >"Too Hot to Handle"</span
+          >
+          - our content is so exclusive it needs encryption. Plus,
+          <span style="color: var(--accent); font-weight: 600">Hot Potato</span>
+          is a real Move pattern where objects must be consumed in the same
+          transaction they're created - just like our subscriptions unlock
+          content only while they're active!
+        </p>
+      </div>
+      <div
+        style="
+          display: flex;
+          flex-direction: column;
+          gap: 60px;
+          align-items: center;
+        "
+      >
+        <div style="text-align: center">
+          <img
+            src="client/public/stat1.jpg"
+            alt="Potato State 1"
+            style="
+              border-radius: 30px;
+              box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+            "
+          />
+          <p
+            style="
+              color: var(--accent);
+              font-size: 32px;
+              margin-top: 24px;
+              font-weight: 600;
+            "
+          >
+            Happy
+          </p>
+        </div>
+        <div style="text-align: center">
+          <img
+            src="client/public/state2.jpg"
+            alt="Potato State 2"
+            style="
+              border-radius: 30px;
+              box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+            "
+          />
+          <p
+            style="
+              color: var(--accent);
+              font-size: 32px;
+              margin-top: 24px;
+              font-weight: 600;
+            "
+          >
+            Thinking
+          </p>
+        </div>
+        <div style="text-align: center">
+          <img
+            src="client/public/state3.jpg"
+            alt="Potato State 3"
+            style="
+              border-radius: 30px;
+              box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+            "
+          />
+          <p
+            style="
+              color: var(--accent);
+              font-size: 32px;
+              margin-top: 24px;
+              font-weight: 600;
+            "
+          >
+            Excited
+          </p>
+        </div>
+        <div style="text-align: center">
+          <img
+            src="client/public/state4.jpg"
+            alt="Potato State 4"
+            style="
+              border-radius: 30px;
+              box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+            "
+          />
+          <p
+            style="
+              color: var(--accent);
+              font-size: 32px;
+              margin-top: 24px;
+              font-weight: 600;
+            "
+          >
+            Cool
+          </p>
+        </div>
+        <div style="text-align: center">
+          <img
+            src="client/public/state5.jpg"
+            alt="Potato State 5"
+            style="
+              border-radius: 30px;
+              box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+            "
+          />
+          <p
+            style="
+              color: var(--accent);
+              font-size: 32px;
+              margin-top: 24px;
+              font-weight: 600;
+            "
+          >
+            Sleepy
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 3: Architecture -->
+    <section class="slide" id="slide3">
+      <span class="slide-number">3 / 9</span>
+      <h2>Architecture</h2>
+      <div class="architecture-container">
+        <!-- External Systems -->
+        <div class="arch-section">
+          <div class="arch-section-title">External Systems</div>
+          <div class="arch-card external">
+            <div class="arch-card-header">
+              <span class="arch-card-icon">📦</span>
+              <span class="arch-card-title">Walrus</span>
+            </div>
+            <div class="arch-card-item">Blob Storage</div>
+            <div class="arch-card-item">Encrypted content</div>
+          </div>
+          <div class="arch-card external">
+            <div class="arch-card-header">
+              <span class="arch-card-icon">🔐</span>
+              <span class="arch-card-title">Seal</span>
+            </div>
+            <div class="arch-card-item">Key Management</div>
+            <div class="arch-card-item">Decryption policy</div>
+          </div>
+          <div class="arch-card external">
+            <div class="arch-card-header">
+              <span class="arch-card-icon">💻</span>
+              <span class="arch-card-title">Frontend</span>
+            </div>
+            <div class="arch-card-item">React + GraphQL</div>
+            <div class="arch-card-item">User interface</div>
+          </div>
+        </div>
+
+        <!-- Sui Blockchain -->
+        <div class="arch-section">
+          <div class="arch-section-title" style="color: #f5a623">
+            ⚡ Sui Blockchain
+          </div>
+          <div class="arch-card blockchain">
+            <div
+              style="
+                text-align: center;
+                margin-bottom: 16px;
+                color: var(--text-secondary);
+              "
+            >
+              Move Smart Contracts
+            </div>
+            <div class="inner-card">
+              <div class="arch-card-header">
+                <span class="arch-card-icon">📝</span>
+                <span class="arch-card-title">creator</span>
+              </div>
+              <div class="arch-card-item">• register()</div>
+              <div class="arch-card-item">• publish_post()</div>
+              <div class="arch-card-item">• add_tier()</div>
+            </div>
+            <div class="inner-card" style="margin-top: 12px">
+              <div class="arch-card-header">
+                <span class="arch-card-icon">💳</span>
+                <span class="arch-card-title">subscription</span>
+              </div>
+              <div class="arch-card-item">• subscribe()</div>
+            </div>
+            <div class="inner-card" style="margin-top: 12px">
+              <div class="arch-card-header">
+                <span class="arch-card-icon">🔑</span>
+                <span class="arch-card-title">seal_mock</span>
+              </div>
+              <div class="arch-card-item">• seal_approve()</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Objects -->
+        <div class="arch-section">
+          <div class="arch-section-title">Objects</div>
+          <div class="arch-card shared">
+            <span class="arch-card-label shared">Shared</span>
+            <div class="arch-card-title">CreatorProfile</div>
+            <div class="arch-card-item">+ Dynamic fields:</div>
+            <div class="arch-card-item" style="margin-left: 12px">
+              Post, subscribers
+            </div>
+          </div>
+          <div class="arch-card owned">
+            <span class="arch-card-label owned">Owned</span>
+            <div class="arch-card-title">CreatorCap</div>
+            <div class="arch-card-item">Capability object</div>
+          </div>
+          <div class="arch-card owned">
+            <span class="arch-card-label owned">Owned</span>
+            <div class="arch-card-title">Subscription</div>
+            <div class="arch-card-item">profile_id, expires_at</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="data-flow">
+        <div class="flow-card">
+          <div class="flow-card-title">1. Creator Flow</div>
+          <div class="flow-card-content">
+            Encrypt → Walrus → publish_post(blobId)
+          </div>
+        </div>
+        <div class="flow-card">
+          <div class="flow-card-title">2. Subscribe Flow</div>
+          <div class="flow-card-content">
+            subscribe() → pay SUI → get Subscription
+          </div>
+        </div>
+        <div class="flow-card">
+          <div class="flow-card-title">3. View Flow</div>
+          <div class="flow-card-content">
+            Walrus blob → seal_approve() → decrypt
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 4: Patterns -->
+    <section class="slide" id="slide4">
+      <span class="slide-number">4 / 9</span>
+      <h2>Patterns Used</h2>
+      <div class="patterns-grid">
+        <div class="pattern-card">One-Time Witness</div>
+        <div class="pattern-card">Publisher</div>
+        <div class="pattern-card">Sui Object Display</div>
+        <div class="pattern-card">Capability</div>
+        <div class="pattern-card">Events</div>
+        <div class="pattern-card">Shared object</div>
+        <div class="pattern-card">Address-owned object</div>
+        <div class="pattern-card">Dynamic fields</div>
+      </div>
+    </section>
+
+    <!-- Slide 5: GraphQL -->
+    <section class="slide" id="slide5">
+      <span class="slide-number">5 / 9</span>
+      <h2>GraphQL for Frontend</h2>
+      <div class="graphql-content">
+        <div class="graphql-reason">
+          <h3>Why GraphQL?</h3>
+          <p>
+            Sui's JSON-RPC API is
+            <strong style="color: #ff6b6b">deprecated</strong> and will be
+            removed in future versions. GraphQL provides a more efficient,
+            typed, and flexible way to query blockchain data. It allows us to
+            fetch exactly the data we need in a single request, reducing network
+            overhead and improving application performance.
+          </p>
+        </div>
+        <div class="code-block">
+          <span class="code-keyword">query</span> GetCreatorProfile($id:
+          SuiAddress!) { <span class="code-field">object</span>(address: $id) {
+          <span class="code-field">asMoveObject</span> {
+          <span class="code-field">contents</span> {
+          <span class="code-field">json</span>
+          } } } }
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 6: Demo -->
+    <section class="slide" id="slide6">
+      <span class="slide-number">6 / 9</span>
+      <h2>Live Demo</h2>
+      <p class="subtitle" style="margin-bottom: 30px">
+        Discover creators, subscribe, and access exclusive encrypted content
+      </p>
+      <div
+        style="
+          background: var(--bg-card);
+          border-radius: 16px;
+          padding: 40px;
+          max-width: 1000px;
+          text-align: center;
+        "
+      >
+        <h3 style="color: var(--accent); margin-bottom: 20px">Key Features</h3>
+        <div
+          style="
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            text-align: left;
+          "
+        >
+          <div
+            style="
+              padding: 16px;
+              background: var(--bg-secondary);
+              border-radius: 12px;
+            "
+          >
+            <strong>⛓️ Fully On-Chain</strong>
+            <p
+              style="
+                color: var(--text-secondary);
+                margin-top: 8px;
+                font-size: 14px;
+              "
+            >
+              Not just content on Walrus - <span style="color: var(--accent)">avatars, profiles, subscriptions</span> all stored on-chain
+            </p>
+          </div>
+          <div
+            style="
+              padding: 16px;
+              background: var(--bg-secondary);
+              border-radius: 12px;
+            "
+          >
+            <strong>🔐 Encrypted Content</strong>
+            <p
+              style="
+                color: var(--text-secondary);
+                margin-top: 8px;
+                font-size: 14px;
+              "
+            >
+              Posts encrypted with Seal, stored on Walrus. Supports
+              <span style="color: var(--accent)">images and videos</span>
+            </p>
+          </div>
+          <div
+            style="
+              padding: 16px;
+              background: var(--bg-secondary);
+              border-radius: 12px;
+            "
+          >
+            <strong>💰 Subscription Tiers</strong>
+            <p
+              style="
+                color: var(--text-secondary);
+                margin-top: 8px;
+                font-size: 14px;
+              "
+            >
+              Creators can create
+              <span style="color: var(--accent)">multiple pricing tiers</span>
+              with different durations and prices
+            </p>
+          </div>
+          <div
+            style="
+              padding: 16px;
+              background: var(--bg-secondary);
+              border-radius: 12px;
+            "
+          >
+            <strong>🔍 Smart Search</strong>
+            <p
+              style="
+                color: var(--text-secondary);
+                margin-top: 8px;
+                font-size: 14px;
+              "
+            >
+              Search creators by
+              <span style="color: var(--accent)"
+                >name, wallet address, bio, or SuiNS</span
+              >
+            </p>
+          </div>
+          <div
+            style="
+              padding: 16px;
+              background: var(--bg-secondary);
+              border-radius: 12px;
+            "
+          >
+            <strong>🖼️ Rich Media</strong>
+            <p
+              style="
+                color: var(--text-secondary);
+                margin-top: 8px;
+                font-size: 14px;
+              "
+            >
+              Full gallery support with zoom and navigation for encrypted media
+            </p>
+          </div>
+          <div
+            style="
+              padding: 16px;
+              background: var(--bg-secondary);
+              border-radius: 12px;
+            "
+          >
+            <strong>⚡ Enoki</strong>
+            <p
+              style="
+                color: var(--text-secondary);
+                margin-top: 8px;
+                font-size: 14px;
+              "
+            >
+              <span style="color: var(--accent)">ZK Login</span> and
+              <span style="color: var(--accent)">Gas Sponsorship</span> for
+              seamless UX
+            </p>
+          </div>
+          <div
+            style="
+              padding: 16px;
+              background: var(--bg-secondary);
+              border-radius: 12px;
+            "
+          >
+            <strong>🌐 SuiNS</strong>
+            <p
+              style="
+                color: var(--text-secondary);
+                margin-top: 8px;
+                font-size: 14px;
+              "
+            >
+              Support for
+              <span style="color: var(--accent)">.sui custom names</span> for
+              creators
+            </p>
+          </div>
+          <div
+            style="
+              padding: 16px;
+              background: var(--bg-secondary);
+              border-radius: 12px;
+            "
+          >
+            <strong>🦭 Walrus</strong>
+            <p
+              style="
+                color: var(--text-secondary);
+                margin-top: 8px;
+                font-size: 14px;
+              "
+            >
+              Decentralized
+              <span style="color: var(--accent)">blob storage</span> for
+              encrypted content
+            </p>
+          </div>
+          <div
+            style="
+              padding: 16px;
+              background: var(--bg-secondary);
+              border-radius: 12px;
+            "
+          >
+            <strong>🔒 Seal</strong>
+            <p
+              style="
+                color: var(--text-secondary);
+                margin-top: 8px;
+                font-size: 14px;
+              "
+            >
+              Threshold <span style="color: var(--accent)">encryption</span> for
+              subscriber-only content
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 7: Team -->
+    <section class="slide" id="slide7">
+      <span class="slide-number">7 / 9</span>
+      <div
+        class="logo"
+        style="
+          background: transparent;
+          box-shadow: none;
+          width: 240px;
+          height: 240px;
+        "
+      >
+        <img
+          src="client/public/potato.webp"
+          alt="SuiPatron Logo"
+          style="width: 240px; height: 240px; object-fit: contain"
+        />
+      </div>
+      <h1>Hot Potato Team</h1>
+      <div class="team-info">
+        <p class="subtitle" style="margin-bottom: 40px">
+          99% of the project built by two developers
+        </p>
+        <div
+          style="
+            display: flex;
+            gap: 60px;
+            justify-content: center;
+            margin-bottom: 40px;
+          "
+        >
+          <div style="text-align: center">
+            <div
+              style="
+                width: 100px;
+                height: 100px;
+                background: linear-gradient(135deg, var(--accent), #e8940c);
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin: 0 auto 16px;
+              "
+            >
+              <span style="font-size: 40px">👨‍💻</span>
+            </div>
+            <h3
+              style="
+                color: var(--text-primary);
+                font-size: 24px;
+                margin-bottom: 8px;
+              "
+            >
+              Yaro
+            </h3>
+            <p style="color: var(--text-secondary)">Move & Backend</p>
+          </div>
+          <div style="text-align: center">
+            <div
+              style="
+                width: 100px;
+                height: 100px;
+                background: linear-gradient(135deg, var(--accent), #e8940c);
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin: 0 auto 16px;
+              "
+            >
+              <span style="font-size: 40px">👩‍💻</span>
+            </div>
+            <h3
+              style="
+                color: var(--text-primary);
+                font-size: 24px;
+                margin-bottom: 8px;
+              "
+            >
+              Yana
+            </h3>
+            <p style="color: var(--text-secondary)">Frontend & Integration</p>
+          </div>
+        </div>
+        <div class="links">
+          <a
+            href="https://github.com/posedonXB/sui-patron"
+            class="link-btn"
+            target="_blank"
+            >GitHub Repository</a
+          >
+          <a href="#" class="link-btn">Live Demo</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 8: Q&A -->
+    <section class="slide" id="slide8" style="height: auto; min-height: 100vh">
+      <span class="slide-number">8 / 9</span>
+      <h2>Technical Q&A</h2>
+      <div style="max-width: 900px; text-align: left">
+        <h3
+          style="color: var(--accent); margin-bottom: 16px; font-size: 1.3rem"
+        >
+          Design Decisions
+        </h3>
+        <div
+          style="
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 12px;
+          "
+        >
+          <strong>Why dynamic fields for posts instead of vector?</strong>
+          <p style="color: var(--text-secondary); margin-top: 6px">
+            => Scalability, no size limits
+          </p>
+        </div>
+        <div
+          style="
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 24px;
+          "
+        >
+          <strong>How does seal_approve validate access?</strong>
+          <p style="color: var(--text-secondary); margin-top: 6px">
+            => Checks subscription profile_id match, expiration, and ID prefix
+          </p>
+        </div>
+
+        <h3
+          style="color: var(--accent); margin-bottom: 16px; font-size: 1.3rem"
+        >
+          Security
+        </h3>
+        <div
+          style="
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 12px;
+          "
+        >
+          <strong>How do you prevent unauthorized tier modification?</strong>
+          <p style="color: var(--text-secondary); margin-top: 6px">
+            => CreatorCap capability pattern
+          </p>
+        </div>
+        <div
+          style="
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 16px 20px;
+          "
+        >
+          <strong>What if subscription expires mid-decryption?</strong>
+          <p style="color: var(--text-secondary); margin-top: 6px">
+            => seal_approve checks expires_at >= clock.timestamp_ms()
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 9: Thank You -->
+    <section class="slide" id="slide9">
+      <span class="slide-number">9 / 9</span>
+      <div
+        class="logo"
+        style="
+          background: transparent;
+          box-shadow: none;
+          width: 240px;
+          height: 240px;
+        "
+      >
+        <img
+          src="client/public/potato.webp"
+          alt="SuiPatron Logo"
+          style="width: 240px; height: 240px; object-fit: contain"
+        />
+      </div>
+      <h1 style="font-size: 5rem; margin-bottom: 30px">Thank You!</h1>
+      <p class="subtitle" style="margin-bottom: 40px">Questions?</p>
+      <div class="links">
+        <a
+          href="https://github.com/posedonXB/sui-patron"
+          class="link-btn"
+          target="_blank"
+          >GitHub Repository</a
+        >
+        <a href="#" class="link-btn">Live Demo</a>
+      </div>
+    </section>
+
+    <script>
+      // Update active nav dot on scroll
+      const slides = document.querySelectorAll(".slide");
+      const dots = document.querySelectorAll(".nav-dot");
+
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              const index = Array.from(slides).indexOf(entry.target);
+              dots.forEach((dot, i) => {
+                dot.classList.toggle("active", i === index);
+              });
+            }
+          });
+        },
+        { threshold: 0.5 },
+      );
+
+      slides.forEach((slide) => observer.observe(slide));
+
+      // Smooth scroll to slide on dot click
+      dots.forEach((dot, index) => {
+        dot.addEventListener("click", (e) => {
+          e.preventDefault();
+          slides[index].scrollIntoView({ behavior: "smooth" });
+        });
+      });
+    </script>
+  </body>
+</html>
